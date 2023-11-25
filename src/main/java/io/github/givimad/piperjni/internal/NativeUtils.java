@@ -156,7 +156,6 @@ public class NativeUtils {
             temporaryDir.toFile().deleteOnExit();
         }
         Path temp = temporaryDir.resolve(filename);
-        System.out.println("test: " + temp);
         try (InputStream is = NativeUtils.class.getResourceAsStream(path)) {
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
