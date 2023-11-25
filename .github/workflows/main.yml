@@ -24,7 +24,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: debian-binary-amd64
-          path: dist/*.so
+          path: dist/*.so*
       - name: Artifact eSpeak data
         uses: actions/upload-artifact@v3
         with:
@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: debian-binary-arm64
-          path: dist/*.so
+          path: dist/*.so*
 
   build-lib-debian-arm:
     runs-on: ubuntu-latest
@@ -82,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: debian-binary-armv7l
-          path: dist/*.so
+          path: dist/*.so*
 
   build-lib-windows:
     runs-on: windows-latest
@@ -173,12 +173,19 @@ jobs:
       run: ls -R
     - name: setup resources
       run: |
-        mv ./debian-binary-amd64/*.so ./src/main/resources/debian-amd64/
-        mv ./debian-binary-arm64/*.so ./src/main/resources/debian-arm64/
-        mv ./debian-binary-armv7l/*.so ./src/main/resources/debian-armv7l/
+        mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
+        mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
+        mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
+        mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
+        mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
+        mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
         mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
-        mv ./macos-binary-amd64/*.dylib ./src/main/resources/macos-amd64/
-        mv ./macos-binary-arm64/*.dylib ./src/main/resources/macos-arm64/
+        mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
+        mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/
+        mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
+        mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
+        mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
+        mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
         mv ./tashkeel-model/*.ort ./src/main/resources/
         mv ./espeak-ng-data/*.zip ./src/main/resources/
         
