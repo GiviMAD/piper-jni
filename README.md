@@ -45,18 +45,16 @@ You can also find the package's jar attached to each [release](https://github.co
         }
         ...
 
-        private void createWAVFile(short[] sampleChunks, long sampleRate, Path outFilePath) {
+        private void createWAVFile(short[] samples, long sampleRate, Path outFilePath) {
                 AudioFormat jAudioFormat;
                 ByteBuffer byteBuffer;
-                int numSamples = sampleChunks.stream().map(c -> c.length).reduce(0, Integer::sum);
+                int numSamples = samples.length;
                 jAudioFormat = new javax.sound.sampled.AudioFormat(
                         AudioFormat.Encoding.PCM_SIGNED, sampleRate, 16, 1, 2, sampleRate, false
                 );
                 byteBuffer = ByteBuffer.allocate(numSamples * 2).order(ByteOrder.LITTLE_ENDIAN);
-                for(var chunk: sampleChunks) {
-                        for(var sample : chunk) {
-                                byteBuffer.putShort(sample);
-                        }
+                for(var sample: samples) {
+                        byteBuffer.putShort(sample);
                 }
                 AudioInputStream audioInputStreamTemp = new AudioInputStream(new ByteArrayInputStream(byteBuffer.array()), jAudioFormat, numSamples);
                 try {
