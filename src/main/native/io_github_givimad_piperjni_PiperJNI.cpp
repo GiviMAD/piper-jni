@@ -187,7 +187,7 @@ JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_freeConfig(JNIEn
     configMap.erase(configRef);
 }
 
-JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_loadVoice(JNIEnv *env, jobject thisObject, jint configRef, jstring modelPath, jstring modelConfigPath, jlong jSpeakerId) {
+JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_loadVoice(JNIEnv *env, jobject thisObject, jint configRef, jstring modelPath, jstring modelConfigPath, jlong jSpeakerId, jboolean useCUDA) {
     piper::PiperConfig *piperConfig = configMap.at(configRef);
     piper::Voice *voice = new piper::Voice{};
     const char* cModelPath = env->GetStringUTFChars(modelPath, NULL);
@@ -203,7 +203,7 @@ JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_loadVoice(JNIEnv
     int ref;
     try {
         ref = getVoiceId();
-        piper::loadVoice(*piperConfig, cppModelPath, cppModelConfigPath, *voice, cppSpeakerId);
+        piper::loadVoice(*piperConfig, cppModelPath, cppModelConfigPath, *voice, cppSpeakerId, useCUDA);
     } catch (const std::exception&) {
         swallow_cpp_exception_and_throw_java(env);
         return -1;

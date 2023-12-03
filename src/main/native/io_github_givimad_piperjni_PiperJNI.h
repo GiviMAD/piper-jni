@@ -58,10 +58,10 @@ JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_terminateConfig
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI
  * Method:    loadVoice
- * Signature: (ILjava/lang/String;Ljava/lang/String;J)I
+ * Signature: (ILjava/lang/String;Ljava/lang/String;JZ)I
  */
 JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_loadVoice
-  (JNIEnv *, jobject, jint, jstring, jstring, jlong);
+  (JNIEnv *, jobject, jint, jstring, jstring, jlong, jboolean);
 
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI

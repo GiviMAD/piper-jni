@@ -12,6 +12,7 @@ import java.nio.file.Path;
 public class PiperJNI  {
 
     private static boolean libraryLoaded;
+    private boolean initialized = false;
 
     //region native api
     protected native int newConfig();
@@ -20,7 +21,7 @@ public class PiperJNI  {
     protected native void setTashkeelModelPath(int configRef, String tashkeelModelPath);
     protected native void initializeConfig(int configRef) throws IOException;
     protected native void terminateConfig(int configRef) throws IOException;
-    protected native int loadVoice(int configRef, String model, String modelConfig, long speakerId);
+    protected native int loadVoice(int configRef, String model, String modelConfig, long speakerId, boolean useCUDA);
     protected native void freeVoice(int voiceRef);
     protected native boolean voiceUsesESpeakPhonemes(int voiceRef);
     protected native boolean voiceUsesTashkeelModel(int voiceRef);
@@ -48,11 +49,46 @@ public class PiperJNI  {
         assertRegistered();
         return new PiperConfig(this);
     }
-
+    public void initialize(PiperConfig config, PiperVoice voice) throws IOException {
+        voice.assertAvailable();
+        initialize(config, voice.getUsesESpeakPhonemes(), voice.getUsesTashkeelModel());
+    }
+    public void initialize(PiperConfig config, boolean useESpeakPhonemes, boolean useTashkeelModel) throws IOException {
+        config.assertAvailable();
+        if (initialized) {
+            throw new IOException("Already initialized");
+        }
+        if (useESpeakPhonemes) {
+            config.setESpeakDataPath(NativeUtils.getESpeakNGData());
+        } else {
+            config.setESpeakDataPath(null);
+        }
+        if (useTashkeelModel) {
+            config.setTashkeelModelPath(NativeUtils.getTashkeelModel());
+        } else {
+            config.setTashkeelModelPath(null);
+        }
+        initializeConfig(config.ref);
+        this.initialized = true;
+    }
+    public void terminate(PiperConfig config) throws IOException {
+        config.assertAvailable();
+        if (!initialized) {
+            throw new IOException("Not initialized");
+        }
+        terminateConfig(config.ref);
+        this.initialized = false;
+    }
     public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath) throws Exception {
-        return loadVoice(config, modelPath, modelConfigPath, -1);
+        return loadVoice(config, modelPath, modelConfigPath, -1, false);
     }
     public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId) throws Exception {
+        return loadVoice(config, modelPath, modelConfigPath, speakerId, false);
+    }
+    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, boolean useCUDA) throws Exception {
+        return loadVoice(config, modelPath, modelConfigPath, -1, useCUDA);
+    }
+    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA) throws Exception {
         if(modelPath == null || !Files.exists(modelPath) || Files.isDirectory(modelPath)) {
             throw new IllegalArgumentException("Model file is required");
         }
@@ -62,7 +98,7 @@ public class PiperJNI  {
         if(config == null) {
             throw new IllegalArgumentException("Config can not be null");
         }
-        return new PiperVoice(this, config, modelPath, modelConfigPath, speakerId);
+        return new PiperVoice(this, config, modelPath, modelConfigPath, speakerId, useCUDA);
     }
 
     public short[] textToAudio(PiperConfig config, PiperVoice voice, String text) throws Exception {
@@ -74,11 +110,11 @@ public class PiperJNI  {
     }
 
     private short[] textToAudioImpl(PiperConfig config, PiperVoice voice, String text, AudioCallback audioCallback) throws Exception {
+        if(!isInitialized()) {
+            throw new IllegalArgumentException("Piper not initialized");
+        }
         if(config == null) {
             throw new IllegalArgumentException("Config can not be null");
-        }
-        if(!config.isInitialized()) {
-            throw new IllegalArgumentException("Config needs to be initialized");
         }
         if(voice == null) {
             throw new IllegalArgumentException("Voice can not be null");
@@ -93,6 +129,9 @@ public class PiperJNI  {
         return textToAudio(config.ref, voice.ref, text, audioCallback);
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
     /**
      * Register the native library, should be called at first.
      *
@@ -155,5 +194,54 @@ public class PiperJNI  {
     }
     public interface AudioCallback {
         void onAudio(short[] audioSamples);
+    }
+
+    /**
+     * In order to avoid sharing pointers between the c++ and java, we use this
+     * util base class which holds a random integer id generated in the whisper.cpp wrapper.
+     *
+     * @author Miguel Álvarez Díez - Initial contribution
+     */
+    public static abstract class JNIRef implements AutoCloseable {
+        /**
+         * Native pointer reference identifier.
+         */
+        protected final int ref;
+        private boolean released;
+
+        /**
+         * Asserts the provided pointer is still available.
+         *
+         */
+        protected void assertAvailable() {
+            if (this.isReleased()) {
+                throw new RuntimeException("Unavailable pointer, object is closed");
+            }
+        }
+
+        /**
+         * Creates a new object used to represent a struct pointer on the native library.
+         *
+         * @param ref a random integer id generated by the native wrapper
+         */
+        protected JNIRef(int ref) {
+            this.ref = ref;
+        }
+
+        /**
+         * Return true if native memory is free
+         *
+         * @return a boolean indicating if the native data was already released
+         */
+        protected boolean isReleased() {
+            return released;
+        }
+
+        /**
+         * Mark the point as released
+         */
+        protected void release() {
+            released = true;
+        }
     }
 }

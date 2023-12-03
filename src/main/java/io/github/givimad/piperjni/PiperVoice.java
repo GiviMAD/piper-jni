@@ -1,10 +1,9 @@
 package io.github.givimad.piperjni;
 
-import io.github.givimad.piperjni.internal.JNIRef;
 
 import java.nio.file.Path;
 
-public class PiperVoice extends JNIRef {
+public class PiperVoice extends PiperJNI.JNIRef {
 
     private final PiperJNI piper;
 
@@ -12,8 +11,8 @@ public class PiperVoice extends JNIRef {
      * Creates a new object used to represent a struct pointer on the native library.
      *
      */
-    protected PiperVoice(PiperJNI piper, PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId) throws IllegalArgumentException {
-        super(piper.loadVoice(config.ref, modelPath.toAbsolutePath().toString(), modelConfigPath.toAbsolutePath().toString(), speakerId));
+    protected PiperVoice(PiperJNI piper, PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA) throws IllegalArgumentException {
+        super(piper.loadVoice(config.ref, modelPath.toAbsolutePath().toString(), modelConfigPath.toAbsolutePath().toString(), speakerId, useCUDA));
         this.piper = piper;
     }
     public boolean getUsesESpeakPhonemes() {

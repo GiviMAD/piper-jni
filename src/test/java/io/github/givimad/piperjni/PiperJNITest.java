@@ -81,9 +81,9 @@ public class PiperJNITest {
             try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
-                config.initialize(voice);
+                piper.initialize(config, voice);
                 short[] samples = piper.textToAudio(config, voice, textToSpeak);
-                config.terminate();
+                piper.terminate(config);
                 assertNotEquals( 0, samples.length);
                 createWAVFile(List.of(samples), sampleRate, Path.of("test.wav"));
             }
@@ -109,10 +109,10 @@ public class PiperJNITest {
             try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig))) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
-                config.initialize(voice);
+                piper.initialize(config, voice);
                 final ArrayList<short[]> audioSamplesChunks = new ArrayList<>();
                 piper.textToAudio(config, voice, textToSpeak, audioSamplesChunks::add);
-                config.terminate();
+                piper.terminate(config);
                 assertFalse(audioSamplesChunks.isEmpty());
                 assertNotEquals(0, audioSamplesChunks.get(0).length);
                 createWAVFile(audioSamplesChunks, sampleRate, Path.of("test-stream.wav"));

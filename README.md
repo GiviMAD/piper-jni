@@ -20,6 +20,8 @@ You can also find the package's jar attached to each [release](https://github.co
 
 ## Basic Example
 
+A basic example available at the tests.
+
 ```java
         ...
         String voiceModel = System.getenv("VOICE_MODEL");
@@ -37,34 +39,13 @@ You can also find the package's jar attached to each [release](https://github.co
         try (var config = piper.createConfig()) {
             try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {
                 int sampleRate = voice.getSampleRate();
-                config.initialize(voice);
+                piper.initialize(config, voice);
                 short[] samples = piper.textToAudio(config, voice, textToSpeak);
-                config.terminate();
+                piper.terminate(config);
                 createWAVFile(samples, sampleRate, Path.of("test.wav"));
             }
         }
         ...
-
-        private void createWAVFile(short[] samples, long sampleRate, Path outFilePath) {
-                AudioFormat jAudioFormat;
-                ByteBuffer byteBuffer;
-                int numSamples = samples.length;
-                jAudioFormat = new javax.sound.sampled.AudioFormat(
-                        AudioFormat.Encoding.PCM_SIGNED, sampleRate, 16, 1, 2, sampleRate, false
-                );
-                byteBuffer = ByteBuffer.allocate(numSamples * 2).order(ByteOrder.LITTLE_ENDIAN);
-                for(var sample: samples) {
-                        byteBuffer.putShort(sample);
-                }
-                AudioInputStream audioInputStreamTemp = new AudioInputStream(new ByteArrayInputStream(byteBuffer.array()), jAudioFormat, numSamples);
-                try {
-                        FileOutputStream audioFileOutputStream = new FileOutputStream(outFilePath.toFile());
-                        AudioSystem.write(audioInputStreamTemp, AudioFileFormat.Type.WAVE, audioFileOutputStream);
-                        audioFileOutputStream.close();
-                } catch (IOException e) {
-                        System.err.println("Unable to store sample: " + e.getMessage());
-                }
-        }
 ```
 
 ## Building the project from source.
