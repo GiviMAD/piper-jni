@@ -31,7 +31,10 @@ public class PiperConfig extends PiperJNI.JNIRef {
     }
 
     @Override
-    public void close() throws Exception {
-        piper.freeConfig(this.ref);
+    public void close() {
+        if(!isReleased()) {
+            piper.freeConfig(this.ref);
+            release();
+        }
     }
 }

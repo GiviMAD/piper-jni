@@ -31,92 +31,96 @@ public class PiperJNITest {
     }
 
     @Test
-    public void getPiperVersion() throws Exception {
+    public void getPiperVersion() {
         var version = piper.getPiperVersion();
         assertNotNull(version, "vad mode configured");
         System.out.println("Piper version: " + version);
     }
 
     @Test
-    public void createPiperConfig() throws Exception {
-        try (var config = piper.createConfig()) {
-            assertNotNull(config);
+    public void initializePiper() throws IOException {
+        try {
+            piper.initialize(true, false);
+        } finally {
+            piper.terminate();
         }
     }
 
     @Test
-    public void createPiperVoice() throws Exception {
+    public void createPiperVoice() throws IOException, ConfigurationException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
-        if(voiceModel == null || voiceModel.isBlank()) {
+        if (voiceModel == null || voiceModel.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL is required");
         }
-        if(voiceModelConfig == null || voiceModelConfig.isBlank()) {
+        if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
-        try (var config = piper.createConfig()) {
-            assertNotNull(config);
-            try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig))) {
+        try {
+            piper.initialize();
+            try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig))) {
                 assertNotNull(voice);
             }
+        } finally {
+            piper.terminate();
         }
     }
 
     @Test
-    public void createAudioData() throws Exception {
+    public void createAudioData() throws IOException, ConfigurationException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
-        if(voiceModel == null || voiceModel.isBlank()) {
+        if (voiceModel == null || voiceModel.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL is required");
         }
-        if(voiceModelConfig == null || voiceModelConfig.isBlank()) {
+        if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
-        if(textToSpeak == null || textToSpeak.isBlank()) {
+        if (textToSpeak == null || textToSpeak.isBlank()) {
             throw new ConfigurationException("env var TEXT_TO_SPEAK is required");
         }
-        try (var config = piper.createConfig()) {
-            assertNotNull(config);
-            try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {
+        try {
+            piper.initialize(true, true);
+            try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
-                piper.initialize(config, voice);
-                short[] samples = piper.textToAudio(config, voice, textToSpeak);
-                piper.terminate(config);
-                assertNotEquals( 0, samples.length);
+                short[] samples = piper.textToAudio(voice, textToSpeak);
+                assertNotEquals(0, samples.length);
                 createWAVFile(List.of(samples), sampleRate, Path.of("test.wav"));
             }
+        } finally {
+            piper.terminate();
         }
     }
 
     @Test
-    public void streamAudioData() throws Exception {
+    public void streamAudioData() throws ConfigurationException, IOException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
-        if(voiceModel == null || voiceModel.isBlank()) {
+        if (voiceModel == null || voiceModel.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL is required");
         }
-        if(voiceModelConfig == null || voiceModelConfig.isBlank()) {
+        if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
             throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
-        if(textToSpeak == null || textToSpeak.isBlank()) {
+        if (textToSpeak == null || textToSpeak.isBlank()) {
             throw new ConfigurationException("env var TEXT_TO_SPEAK is required");
         }
-        try (var config = piper.createConfig()) {
-            assertNotNull(config);
-            try (var voice = piper.loadVoice(config, Paths.get(voiceModel), Path.of(voiceModelConfig))) {
+        try {
+            piper.initialize(true, false);
+            try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig))) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
-                piper.initialize(config, voice);
                 final ArrayList<short[]> audioSamplesChunks = new ArrayList<>();
-                piper.textToAudio(config, voice, textToSpeak, audioSamplesChunks::add);
-                piper.terminate(config);
+                piper.textToAudio(voice, textToSpeak, audioSamplesChunks::add);
                 assertFalse(audioSamplesChunks.isEmpty());
                 assertNotEquals(0, audioSamplesChunks.get(0).length);
                 createWAVFile(audioSamplesChunks, sampleRate, Path.of("test-stream.wav"));
             }
+        } finally {
+            piper.terminate();
         }
     }
 
@@ -127,8 +131,8 @@ public class PiperJNITest {
         jAudioFormat = new javax.sound.sampled.AudioFormat(javax.sound.sampled.AudioFormat.Encoding.PCM_SIGNED,
                 sampleRate, 16, 1, 2, sampleRate, false);
         byteBuffer = ByteBuffer.allocate(numSamples * 2).order(ByteOrder.LITTLE_ENDIAN);
-        for(var chunk: sampleChunks) {
-            for(var sample : chunk) {
+        for (var chunk : sampleChunks) {
+            for (var sample : chunk) {
                 byteBuffer.putShort(sample);
             }
         }

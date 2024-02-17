@@ -44,7 +44,7 @@ void swallow_cpp_exception_and_throw_java(JNIEnv * env) {
         NewJavaException(env, "java/io/IOException", rhs.what());
     } catch(const std::exception& e) {
         //translate unknown C++ exception to a Java exception
-        NewJavaException(env, "java/lang/Exception", e.what());
+        NewJavaException(env, "java/lang/RuntimeException", e.what());
     } catch(...) {
         //translate unknown C++ exception to a Java error
         NewJavaException(env, "java/lang/Error", "Unknown native exception type");

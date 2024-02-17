@@ -2,6 +2,7 @@ package io.github.givimad.piperjni;
 
 import io.github.givimad.piperjni.internal.NativeUtils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,55 +10,77 @@ import java.nio.file.Path;
 /**
  * Piper JNI
  */
-public class PiperJNI  {
+public class PiperJNI implements AutoCloseable {
 
     private static boolean libraryLoaded;
-    private boolean initialized = false;
+    private PiperConfig currentConfig;
 
     //region native api
     protected native int newConfig();
+
     protected native void freeConfig(int configRef);
+
     protected native void setESpeakDataPath(int configRef, String eSpeakDataPath);
+
     protected native void setTashkeelModelPath(int configRef, String tashkeelModelPath);
+
     protected native void initializeConfig(int configRef) throws IOException;
-    protected native void terminateConfig(int configRef) throws IOException;
+
+    protected native void terminateConfig(int configRef);
+
     protected native int loadVoice(int configRef, String model, String modelConfig, long speakerId, boolean useCUDA);
+
     protected native void freeVoice(int voiceRef);
+
     protected native boolean voiceUsesESpeakPhonemes(int voiceRef);
+
     protected native boolean voiceUsesTashkeelModel(int voiceRef);
+
     protected native int voiceSampleRate(int voiceRef);
+
     private native short[] textToAudio(int configRef, int voiceRef, String text, AudioCallback audioCallback) throws IOException;
+
     private native String getVersion();
     //endregion
 
+    /**
+     * Creates a new Piper instance.
+     * @throws IOException if library registration fails
+     */
     public PiperJNI() throws IOException {
         loadLibrary();
     }
 
     /**
-     *  Get piper version.
+     * Get piper version.
      *
      * @return piper library version.
-     * @throws IOException if library is not loaded
      */
-    public String getPiperVersion() throws Exception {
+    public String getPiperVersion() {
         assertRegistered();
         return getVersion();
     }
 
-    public PiperConfig createConfig() throws Exception {
+    /**
+     * Initializes the piper instance configuration.
+     * Should be called before using the instance.
+     * @throws IOException if initialization fails.
+     */
+    public void initialize() throws IOException {
+        initialize(true, false);
+    }
+
+    /**
+     * Initializes the piper instance configuration.
+     * Should be called before using the instance.
+     * @param useESpeakPhonemes Support voices with ESpeak phonemes.
+     * @param useTashkeelModel Support voices using the Tashkeel model.
+     * @throws IOException if initialization fails.
+     */
+    public void initialize(boolean useESpeakPhonemes, boolean useTashkeelModel) throws IOException {
         assertRegistered();
-        return new PiperConfig(this);
-    }
-    public void initialize(PiperConfig config, PiperVoice voice) throws IOException {
-        voice.assertAvailable();
-        initialize(config, voice.getUsesESpeakPhonemes(), voice.getUsesTashkeelModel());
-    }
-    public void initialize(PiperConfig config, boolean useESpeakPhonemes, boolean useTashkeelModel) throws IOException {
-        config.assertAvailable();
-        if (initialized) {
-            throw new IOException("Already initialized");
-        }
+        terminate();
+        PiperConfig config = new PiperConfig(this);
         if (useESpeakPhonemes) {
             config.setESpeakDataPath(NativeUtils.getESpeakNGData());
         } else {
@@ -69,69 +92,132 @@ public class PiperJNI  {
             config.setTashkeelModelPath(null);
         }
         initializeConfig(config.ref);
-        this.initialized = true;
-    }
-    public void terminate(PiperConfig config) throws IOException {
-        config.assertAvailable();
-        if (!initialized) {
-            throw new IOException("Not initialized");
-        }
-        terminateConfig(config.ref);
-        this.initialized = false;
-    }
-    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath) throws Exception {
-        return loadVoice(config, modelPath, modelConfigPath, -1, false);
-    }
-    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId) throws Exception {
-        return loadVoice(config, modelPath, modelConfigPath, speakerId, false);
-    }
-    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, boolean useCUDA) throws Exception {
-        return loadVoice(config, modelPath, modelConfigPath, -1, useCUDA);
-    }
-    public PiperVoice loadVoice(PiperConfig config, Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA) throws Exception {
-        if(modelPath == null || !Files.exists(modelPath) || Files.isDirectory(modelPath)) {
-            throw new IllegalArgumentException("Model file is required");
-        }
-        if(modelConfigPath == null || !Files.exists(modelConfigPath) || Files.isDirectory(modelConfigPath)) {
-            throw new IllegalArgumentException("Model config file is required");
-        }
-        if(config == null) {
-            throw new IllegalArgumentException("Config can not be null");
-        }
-        return new PiperVoice(this, config, modelPath, modelConfigPath, speakerId, useCUDA);
+        this.currentConfig = config;
     }
 
-    public short[] textToAudio(PiperConfig config, PiperVoice voice, String text) throws Exception {
-        return textToAudioImpl(config, voice, text, null);
+    /**
+     * Unload current configuration if any.
+     */
+    public void terminate() {
+        if (isInitialized()) {
+            terminateConfig(currentConfig.ref);
+            this.currentConfig = null;
+        }
     }
 
-    public void textToAudio(PiperConfig config, PiperVoice voice, String text, AudioCallback audioCallback) throws Exception {
-        textToAudioImpl(config, voice, text, audioCallback);
+    /**
+     * Loads piper voice model and config.
+     *
+     * @param modelPath       model file path
+     * @param modelConfigPath model config file path
+     * @return a {@link PiperVoice} instance
+     * @throws FileNotFoundException if models or config doesn't exist
+     * @throws NotInitialized        if piper was not initialized
+     */
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath) throws IOException, NotInitialized {
+        return loadVoice(modelPath, modelConfigPath, -1, false);
     }
 
-    private short[] textToAudioImpl(PiperConfig config, PiperVoice voice, String text, AudioCallback audioCallback) throws Exception {
-        if(!isInitialized()) {
-            throw new IllegalArgumentException("Piper not initialized");
+    /**
+     * Loads piper voice model and config.
+     *
+     * @param modelPath       model file path
+     * @param modelConfigPath model config file path
+     * @param speakerId       Speaker id or -1.
+     * @return a {@link PiperVoice} instance
+     * @throws FileNotFoundException if models or config doesn't exist
+     * @throws NotInitialized        if piper was not initialized
+     */
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId) throws IOException, NotInitialized {
+        return loadVoice(modelPath, modelConfigPath, speakerId, false);
+    }
+
+    /**
+     * Loads piper voice model and config.
+     *
+     * @param modelPath       model file path
+     * @param modelConfigPath model config file path
+     * @param useCUDA         Use CUDA
+     * @return a {@link PiperVoice} instance
+     * @throws FileNotFoundException if models or config doesn't exist
+     * @throws NotInitialized        if piper was not initialized
+     */
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, boolean useCUDA) throws IOException, NotInitialized {
+        return loadVoice(modelPath, modelConfigPath, -1, useCUDA);
+    }
+
+    /**
+     * Loads piper voice model and config.
+     *
+     * @param modelPath       model file path
+     * @param modelConfigPath model config file path
+     * @param speakerId       Speaker id or -1.
+     * @param useCUDA         Use CUDA
+     * @return a {@link PiperVoice} instance
+     * @throws FileNotFoundException if models or config doesn't exist
+     * @throws NotInitialized        if piper was not initialized
+     */
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA) throws FileNotFoundException, NotInitialized {
+        assertRegistered();
+        assertInitialized();
+        if (modelPath == null || !Files.exists(modelPath) || Files.isDirectory(modelPath)) {
+            throw new FileNotFoundException("Model file is required");
         }
-        if(config == null) {
-            throw new IllegalArgumentException("Config can not be null");
+        if (modelConfigPath == null || !Files.exists(modelConfigPath) || Files.isDirectory(modelConfigPath)) {
+            throw new FileNotFoundException("Model config file is required");
         }
-        if(voice == null) {
-            throw new IllegalArgumentException("Voice can not be null");
+        return new PiperVoice(this, currentConfig, modelPath, modelConfigPath, speakerId, useCUDA);
+    }
+
+    /**
+     * Convert text to audio using the provided voice.
+     * @param voice {@link PiperVoice} instance to use.
+     * @param text Text to speak.
+     * @return The audio samples
+     * @throws IOException If generation fails.
+     * @throws NotInitialized If piper not initialized.
+     */
+    public short[] textToAudio(PiperVoice voice, String text) throws IOException, NotInitialized {
+        return textToAudioImpl(voice, text, null);
+    }
+
+    /**
+     * Convert text to audio using the provided voice and emit segments asynchronously.
+     * @param voice {@link PiperVoice} instance to use.
+     * @param text Text to speak.
+     * @param audioCallback Callback for each audio segment.
+     * @throws IOException If generation fails.
+     * @throws NotInitialized If piper not initialized.
+     */
+    public void textToAudio(PiperVoice voice, String text, AudioCallback audioCallback) throws IOException, NotInitialized {
+        textToAudioImpl(voice, text, audioCallback);
+    }
+
+    private short[] textToAudioImpl(PiperVoice voice, String text, AudioCallback audioCallback) throws IOException, NotInitialized {
+        assertRegistered();
+        assertInitialized();
+        if (voice == null) {
+            throw new NullPointerException("Voice can not be null");
         }
-        if(text == null) {
-            throw new IllegalArgumentException("Text can not be null");
+        if (text == null) {
+            throw new NullPointerException("Text can not be null");
         }
-        if(text.isBlank()) {
+        if (text.isBlank()) {
             // return empty.
-            return new short[] {};
+            return new short[]{};
         }
-        return textToAudio(config.ref, voice.ref, text, audioCallback);
+        return textToAudio(currentConfig.ref, voice.ref, text, audioCallback);
     }
 
+    /**
+     * Checks if piper was initialized
+     *
+     * @return true if piper was initialized
+     */
     public boolean isInitialized() {
-        return initialized;
+        return currentConfig != null && !currentConfig.isReleased();
     }
+
     /**
      * Register the native library, should be called at first.
      *
@@ -182,18 +268,48 @@ public class PiperJNI  {
             }
         }
         if (bundleLibraryPath == null) {
-            throw new java.io.IOException("piper-jni: Unsupported platform " + osName + " - " + osArch + ".");
+            throw new FileNotFoundException("piper-jni: Unsupported platform " + osName + " - " + osArch + ".");
         }
         NativeUtils.loadLibraryFromJar(bundleLibraryPath);
         libraryLoaded = true;
     }
-    private static void assertRegistered() throws IOException {
+
+    private static void assertRegistered() {
         if (!libraryLoaded) {
-            throw new IOException("Native library is unavailable.");
+            throw new RuntimeException("Native library is unavailable.");
         }
     }
+
+    private void assertInitialized() throws NotInitialized {
+        if (!isInitialized()) {
+            throw new NotInitialized();
+        }
+    }
+
+
+    @Override
+    public void close() {
+        terminate();
+    }
+
+    /**
+     * Callback for streamed audio.
+     */
     public interface AudioCallback {
+        /**
+         * Called once on each generated voice segment.
+         * @param audioSamples The segment samples.
+         */
         void onAudio(short[] audioSamples);
+    }
+
+    /**
+     * Emitted if Piper instance was not initialized by calling the {@link #initialize} method.
+     */
+    public static class NotInitialized extends Exception {
+        private NotInitialized() {
+            super("Piper not initialized");
+        }
     }
 
     /**
@@ -211,7 +327,6 @@ public class PiperJNI  {
 
         /**
          * Asserts the provided pointer is still available.
-         *
          */
         protected void assertAvailable() {
             if (this.isReleased()) {
