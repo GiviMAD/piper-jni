@@ -232,45 +232,45 @@ public class PiperJNI implements AutoCloseable {
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.contains("win")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryFromJar("/win-amd64/onnxruntime.dll");
-                NativeUtils.loadLibraryFromJar("/win-amd64/espeak-ng.dll");
-                NativeUtils.loadLibraryFromJar("/win-amd64/piper_phonemize.dll");
+                NativeUtils.loadLibraryResource("/win-amd64/onnxruntime.dll");
+                NativeUtils.loadLibraryResource("/win-amd64/espeak-ng.dll");
+                NativeUtils.loadLibraryResource("/win-amd64/piper_phonemize.dll");
                 bundleLibraryPath = "/win-amd64/piper-jni.dll";
             }
         } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryFromJar("/debian-amd64/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryFromJar("/debian-amd64/libespeak-ng.so.1");
-                NativeUtils.loadLibraryFromJar("/debian-amd64/libpiper_phonemize.so.1");
+                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime.so.1.14.1");
+                NativeUtils.loadLibraryResource("/debian-amd64/libespeak-ng.so.1");
+                NativeUtils.loadLibraryResource("/debian-amd64/libpiper_phonemize.so.1");
                 bundleLibraryPath = "/debian-amd64/libpiper-jni.so";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryFromJar("/debian-arm64/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryFromJar("/debian-arm64/libespeak-ng.so.1");
-                NativeUtils.loadLibraryFromJar("/debian-arm64/libpiper_phonemize.so.1");
+                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so.1.14.1");
+                NativeUtils.loadLibraryResource("/debian-arm64/libespeak-ng.so.1");
+                NativeUtils.loadLibraryResource("/debian-arm64/libpiper_phonemize.so.1");
                 bundleLibraryPath = "/debian-arm64/libpiper-jni.so";
             } else if (osArch.contains("armv7") || osArch.contains("arm")) {
-                NativeUtils.loadLibraryFromJar("/debian-armv7l/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryFromJar("/debian-armv7l/libespeak-ng.so.1");
-                NativeUtils.loadLibraryFromJar("/debian-armv7l/libpiper_phonemize.so.1");
+                NativeUtils.loadLibraryResource("/debian-armv7l/libonnxruntime.so.1.14.1");
+                NativeUtils.loadLibraryResource("/debian-armv7l/libespeak-ng.so.1");
+                NativeUtils.loadLibraryResource("/debian-armv7l/libpiper_phonemize.so.1");
                 bundleLibraryPath = "/debian-armv7l/libpiper-jni.so";
             }
         } else if (osName.contains("mac") || osName.contains("darwin")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryFromJar("/macos-amd64/libonnxruntime.1.14.1.dylib");
-                NativeUtils.loadLibraryFromJar("/macos-amd64/libespeak-ng.1.dylib");
-                NativeUtils.loadLibraryFromJar("/macos-amd64/libpiper_phonemize.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-amd64/libonnxruntime.1.14.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-amd64/libespeak-ng.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-amd64/libpiper_phonemize.1.dylib");
                 bundleLibraryPath = "/macos-amd64/libpiper-jni.dylib";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryFromJar("/macos-arm64/libonnxruntime.1.14.1.dylib");
-                NativeUtils.loadLibraryFromJar("/macos-arm64/libespeak-ng.1.dylib");
-                NativeUtils.loadLibraryFromJar("/macos-arm64/libpiper_phonemize.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-arm64/libonnxruntime.1.14.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-arm64/libespeak-ng.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-arm64/libpiper_phonemize.1.dylib");
                 bundleLibraryPath = "/macos-arm64/libpiper-jni.dylib";
             }
         }
         if (bundleLibraryPath == null) {
             throw new FileNotFoundException("piper-jni: Unsupported platform " + osName + " - " + osArch + ".");
         }
-        NativeUtils.loadLibraryFromJar(bundleLibraryPath);
+        NativeUtils.loadLibraryResource(bundleLibraryPath);
         libraryLoaded = true;
     }
 

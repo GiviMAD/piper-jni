@@ -89,7 +89,7 @@ public class NativeUtils {
      * (restriction of {@link File#createTempFile(java.lang.String, java.lang.String)}).
      * @throws FileNotFoundException If the file could not be found inside the JAR.
      */
-    public static void loadLibraryFromJar(String path) throws IOException {
+    public static void loadLibraryResource(String path) throws IOException {
         if (null == path || !path.startsWith("/")) {
             throw new IllegalArgumentException("The path has to be absolute (start with '/').");
         }
@@ -155,15 +155,23 @@ public class NativeUtils {
             temporaryDir = createTempDirectory(NATIVE_FOLDER_PATH_PREFIX);
             temporaryDir.toFile().deleteOnExit();
         }
+        String altDir = System.getProperty("io.github.givimad.piperjni.libdir");
+        InputStream is;
+        if(altDir != null) {
+           var altPath = Path.of(altDir).resolve(path.substring(1).replaceAll("\\/", File.separator));
+            is = Files.newInputStream(altPath);
+        } else {
+            is = NativeUtils.class.getResourceAsStream(path);
+        }
         Path temp = temporaryDir.resolve(filename);
-        try (InputStream is = NativeUtils.class.getResourceAsStream(path)) {
+        try (is) {
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             Files.delete(temp);
             throw e;
         } catch (NullPointerException e) {
             Files.delete(temp);
-            throw new FileNotFoundException("File " + path + " was not found inside JAR.");
+            throw new FileNotFoundException("File " + path + " was not found inside "+ (altDir !=null ? altDir : "JAR") + ".");
         }
         return temp;
     }
