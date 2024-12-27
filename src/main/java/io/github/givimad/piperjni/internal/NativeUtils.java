@@ -35,6 +35,7 @@ import java.nio.file.ProviderNotFoundException;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -158,14 +159,14 @@ public class NativeUtils {
         String altDir = System.getProperty("io.github.givimad.piperjni.libdir");
         InputStream is;
         if(altDir != null) {
-           var altPath = Path.of(altDir).resolve(path.substring(1).replaceAll("\\/", File.separator));
-            is = Files.newInputStream(altPath);
+            String relativePath = path.substring(1);
+            is = Files.newInputStream(Path.of(altDir).resolve(relativePath));
         } else {
             is = NativeUtils.class.getResourceAsStream(path);
         }
         Path temp = temporaryDir.resolve(filename);
         try (is) {
-            Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(Objects.requireNonNull(is), temp, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             Files.delete(temp);
             throw e;

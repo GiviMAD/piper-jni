@@ -33,7 +33,7 @@ public class PiperJNITest {
     @Test
     public void getPiperVersion() {
         var version = piper.getPiperVersion();
-        assertNotNull(version, "vad mode configured");
+        assertNotNull(version, "version is defined");
         System.out.println("Piper version: " + version);
     }
 

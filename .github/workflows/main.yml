@@ -7,10 +7,10 @@ jobs:
   build-lib-debian-x86_64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
       - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
       - name: Setup project dir
@@ -21,17 +21,17 @@ jobs:
           docker build --build-arg="RUN_TEST=true" -f dockerfile . -t piperjni_binary:x86_64 --load
           docker run --platform=amd64 -v $(pwd)/dist:/out piperjni_binary:x86_64 bash -c "cp src/main/resources/debian-amd64/*.so* /out/ && cp src/main/resources/*.ort /out/ && cp src/main/resources/*.zip /out/"
       - name: Artifact debian x86_64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: debian-binary-amd64
           path: dist/*.so*
       - name: Artifact eSpeak data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: espeak-ng-data
           path: dist/*.zip
       - name: Artifact Tashkeel model
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tashkeel-model
           path: dist/*.ort
@@ -39,12 +39,12 @@ jobs:
   build-lib-debian-arm64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
       - name: Setup project dir
@@ -55,7 +55,7 @@ jobs:
           docker build -f dockerfile . -t piperjni_binary:arm64 --platform arm64 --load
           DOCKER_BUILDKIT=1 docker run --platform=arm64 -v $(pwd)/dist:/out piperjni_binary:arm64 bash -c "cp src/main/resources/debian-arm64/*.so* /out/"
       - name: Artifact debian arm64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: debian-binary-arm64
           path: dist/*.so*
@@ -63,12 +63,12 @@ jobs:
   build-lib-debian-arm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
       - name: Setup project dir
@@ -79,7 +79,7 @@ jobs:
           docker build -f dockerfile . -t piperjni_binary:armv7l --platform arm --load
           DOCKER_BUILDKIT=1 docker run --platform=arm -v $(pwd)/dist:/out piperjni_binary:armv7l bash -c "cp src/main/resources/debian-armv7l/*.so* /out/"
       - name: Artifact debian armv7l
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: debian-binary-armv7l
           path: dist/*.so*
@@ -87,9 +87,9 @@ jobs:
   build-lib-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -108,7 +108,7 @@ jobs:
         run: |
           mv src\main\resources\win-amd64\*.dll .\dist\
       - name: Artifact windows x86_64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-binary-x86_64
           path: dist/*.dll
@@ -116,9 +116,9 @@ jobs:
   build-lib-macos-x86_64:
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -132,7 +132,7 @@ jobs:
           ./build_macos.sh amd64
           mv src/main/resources/macos-amd64/*.dylib dist/
       - name: Artifact macos amd64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-binary-amd64
           path: dist/*.dylib
@@ -140,9 +140,9 @@ jobs:
   build-lib-macos-arm64:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -155,7 +155,7 @@ jobs:
           ./build_macos.sh arm64
           mv src/main/resources/macos-arm64/*.dylib dist/
       - name: Artifact macos arm64
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-binary-arm64
           path: dist/*.dylib
@@ -167,7 +167,7 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: actions/download-artifact@v4
     - name: check tree
       run: ls -R
@@ -190,12 +190,13 @@ jobs:
         mv ./espeak-ng-data/*.zip ./src/main/resources/
         
     - name: Set up Maven Central Repository
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
         java-version: 17
+        distribution: 'zulu'
         server-id: sonatype-nexus-staging
         server-username: MAVEN_USERNAME
-        server-password: MAVEN_PASSWORD
+        server-password: MAVEN_CENTRAL_TOKEN
         gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
         gpg-passphrase: MAVEN_GPG_PASSPHRASE
     - name: Deploy with Maven
@@ -208,7 +209,7 @@ jobs:
         echo "PIPER_VERSION=$PIPER_VERSION" >> $GITHUB_OUTPUT
       env:
         MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+        MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
         MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
     - name: Release
       uses: softprops/action-gh-release@v1
