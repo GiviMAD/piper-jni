@@ -190,7 +190,7 @@ jobs:
       - name: Deploy with Maven
         id: deploy
         run: |
-          mvn -B deploy:deploy-file -DskipTests -Pci-cd
+          mvn -B clean deploy -DskipTests -Pci-cd
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           PIPER_VERSION=$(echo "${VERSION%%"-"*}")
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
