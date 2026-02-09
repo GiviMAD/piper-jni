@@ -106,13 +106,21 @@ Piper voices can be downloaded from [HuggingFace](https://huggingface.co/rhasspy
 Finally, you can run the project's tests to confirm it works:
 
 ```shell
+# Download the test models
+./download_test_model.sh
+# Tests will generate test.wav in the root dir.
+mvn test
+```
+
+Optionally, you can override the voice model and configuration paths as well as the text to speak:
+
+```shell
 # Path to piper voice model
 export VOICE_MODEL=/test-data/es_ES-sharvard-medium.onnx
 # Path to piper voice model config
 export VOICE_MODEL_CONFIG=/test-data/es_ES-sharvard-medium.onnx.json
 # Text to speak
 export TEXT_TO_SPEAK="Buenos días"
-# tests will generate test.wav in the root dir.
 mvn test
 ```
 
