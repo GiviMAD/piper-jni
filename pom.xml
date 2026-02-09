@@ -5,7 +5,7 @@
 
   <groupId>io.github.givimad</groupId>
   <artifactId>piper-jni</artifactId>
-  <version>1.2.0-c0670df</version>
+  <version>1.2.0-73c04d81</version>
 
   <name>piper-jni</name>
   <description>A JNI wrapper for Piper</description>
