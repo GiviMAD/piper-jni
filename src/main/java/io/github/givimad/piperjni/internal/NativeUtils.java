@@ -41,53 +41,51 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * A simple library class which helps with loading dynamic libraries stored in the
- * JAR archive. These libraries usually contain implementation of some methods in
- * native code (using JNI - Java Native Interface).
+ * A simple library class which helps with loading dynamic libraries stored in the JAR archive.
+ * These libraries usually contain implementation of some methods in native code (using JNI - Java
+ * Native Interface).
  *
- * @see <a href="http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar">http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar</a>
- * @see <a href="https://github.com/adamheinrich/native-utils">https://github.com/adamheinrich/native-utils</a>
- *
+ * @see <a
+ *     href="http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar">http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar</a>
+ * @see <a
+ *     href="https://github.com/adamheinrich/native-utils">https://github.com/adamheinrich/native-utils</a>
  */
 public class NativeUtils {
 
     /**
-     * The minimum length a prefix for a file has to have according to {@link File#createTempFile(String, String)}}.
+     * The minimum length a prefix for a file has to have according to {@link
+     * File#createTempFile(String, String)}}.
      */
     private static final int MIN_PREFIX_LENGTH = 3;
+
     private static final String NATIVE_FOLDER_PATH_PREFIX = "piper-jni-native";
 
-    /**
-     * Temporary directory which will contain the DLLs.
-     */
+    /** Temporary directory which will contain the DLLs. */
     private static Path temporaryDir;
-    /**
-     * Espeak data path in temporary directory.
-     */
+
+    /** Espeak data path in temporary directory. */
     private static Path espeakNGDir;
-    /**
-     * Espeak data path in temporary directory.
-     */
+
+    /** Espeak data path in temporary directory. */
     private static Path tashkeelModelFile;
 
-    /**
-     * Private constructor - this class will never be instanced
-     */
-    private NativeUtils() {
-    }
+    /** Private constructor - this class will never be instanced */
+    private NativeUtils() {}
 
     /**
      * Loads library from current JAR archive
      *
-     * The file from JAR is copied into system temporary directory and then loaded. The temporary file is deleted after
-     * exiting.
-     * Method uses String as filename because the pathname is "abstract", not system-dependent.
+     * <p>The file from JAR is copied into system temporary directory and then loaded. The temporary
+     * file is deleted after exiting. Method uses String as filename because the pathname is
+     * "abstract", not system-dependent.
      *
-     * @param path The path of file inside JAR as absolute path (beginning with '/'), e.g. /package/File.ext
+     * @param path The path of file inside JAR as absolute path (beginning with '/'), e.g.
+     *     /package/File.ext
      * @throws IOException If temporary file creation or read/write operation fails
      * @throws IllegalArgumentException If source file (param path) does not exist
-     * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter than three characters
-     * (restriction of {@link File#createTempFile(java.lang.String, java.lang.String)}).
+     * @throws IllegalArgumentException If the path is not absolute or if the filename is shorter
+     *     than three characters (restriction of {@link File#createTempFile(java.lang.String,
+     *     java.lang.String)}).
      * @throws FileNotFoundException If the file could not be found inside the JAR.
      */
     public static void loadLibraryResource(String path) throws IOException {
@@ -99,7 +97,8 @@ public class NativeUtils {
         String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
         // Check if the filename is okay
         if (filename == null || filename.length() < MIN_PREFIX_LENGTH) {
-            throw new IllegalArgumentException("The filename has to be at least 3 characters long.");
+            throw new IllegalArgumentException(
+                    "The filename has to be at least 3 characters long.");
         }
         Path temp = extractToTempDir(path, filename);
         try {
@@ -114,30 +113,35 @@ public class NativeUtils {
             }
         }
     }
+
     public static Path getESpeakNGData() throws IOException {
-        if(espeakNGDir == null || !Files.exists(espeakNGDir)) {
+        if (espeakNGDir == null || !Files.exists(espeakNGDir)) {
             String zipName = "espeak-ng-data.zip";
-            Path espeakNGZip = extractToTempDir( "/"+zipName, zipName);
-            espeakNGDir = espeakNGZip.getParent().resolve(zipName.substring(0, zipName.indexOf(".")));
+            Path espeakNGZip = extractToTempDir("/" + zipName, zipName);
+            espeakNGDir =
+                    espeakNGZip.getParent().resolve(zipName.substring(0, zipName.indexOf(".")));
             extractZipTo(espeakNGZip, espeakNGDir);
             Files.delete(espeakNGZip);
         }
         return espeakNGDir.toAbsolutePath();
     }
+
     public static Path getTashkeelModel() throws IOException {
-        if(tashkeelModelFile == null || !Files.exists(tashkeelModelFile)) {
+        if (tashkeelModelFile == null || !Files.exists(tashkeelModelFile)) {
             String modelName = "libtashkeel_model.ort";
             tashkeelModelFile = NativeUtils.extractToTempDir("/" + modelName, modelName);
         }
         return tashkeelModelFile.toAbsolutePath();
     }
+
     public static void extractZipTo(Path archiveFile, Path destPath) throws IOException {
         Files.createDirectories(destPath); // create dest path folder(s)
         try (ZipFile archive = new ZipFile(archiveFile.toFile())) {
             // sort entries by name to always create folders first
-            List<? extends ZipEntry> entries = archive.stream()
-                    .sorted(Comparator.comparing(ZipEntry::getName))
-                    .collect(Collectors.toList());
+            List<? extends ZipEntry> entries =
+                    archive.stream()
+                            .sorted(Comparator.comparing(ZipEntry::getName))
+                            .collect(Collectors.toList());
             // copy each entry in the dest path
             for (ZipEntry entry : entries) {
                 Path entryDest = destPath.resolve(entry.getName());
@@ -148,8 +152,8 @@ public class NativeUtils {
                 Files.copy(archive.getInputStream(entry), entryDest);
             }
         }
-
     }
+
     private static Path extractToTempDir(String path, String filename) throws IOException {
         // Prepare temporary file
         if (temporaryDir == null) {
@@ -158,7 +162,7 @@ public class NativeUtils {
         }
         String altDir = System.getProperty("io.github.givimad.piperjni.libdir");
         InputStream is;
-        if(altDir != null) {
+        if (altDir != null) {
             String relativePath = path.substring(1);
             is = Files.newInputStream(Path.of(altDir).resolve(relativePath));
         } else {
@@ -172,19 +176,20 @@ public class NativeUtils {
             throw e;
         } catch (NullPointerException e) {
             Files.delete(temp);
-            throw new FileNotFoundException("File " + path + " was not found inside "+ (altDir !=null ? altDir : "JAR") + ".");
+            throw new FileNotFoundException(
+                    "File "
+                            + path
+                            + " was not found inside "
+                            + (altDir != null ? altDir : "JAR")
+                            + ".");
         }
         return temp;
     }
 
     private static boolean isPosixCompliant() {
         try {
-            return FileSystems.getDefault()
-                    .supportedFileAttributeViews()
-                    .contains("posix");
-        } catch (FileSystemNotFoundException
-                | ProviderNotFoundException
-                | SecurityException e) {
+            return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+        } catch (FileSystemNotFoundException | ProviderNotFoundException | SecurityException e) {
             return false;
         }
     }

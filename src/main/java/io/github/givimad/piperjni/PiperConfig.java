@@ -8,9 +8,7 @@ public class PiperConfig extends PiperJNI.JNIRef {
 
     private final PiperJNI piper;
 
-    /**
-     * Creates a new object used to represent a struct pointer on the native library.
-     */
+    /** Creates a new object used to represent a struct pointer on the native library. */
     protected PiperConfig(PiperJNI piper) throws IllegalArgumentException {
         super(piper.newConfig());
         this.piper = piper;
@@ -27,12 +25,13 @@ public class PiperConfig extends PiperJNI.JNIRef {
         if (path != null && (!Files.exists(path) || Files.isDirectory(path))) {
             throw new FileNotFoundException("Provided model path is not correct.");
         }
-        piper.setTashkeelModelPath(this.ref, path != null ? path.toAbsolutePath().toString() : null);
+        piper.setTashkeelModelPath(
+                this.ref, path != null ? path.toAbsolutePath().toString() : null);
     }
 
     @Override
     public void close() {
-        if(!isReleased()) {
+        if (!isReleased()) {
             piper.freeConfig(this.ref);
             release();
         }

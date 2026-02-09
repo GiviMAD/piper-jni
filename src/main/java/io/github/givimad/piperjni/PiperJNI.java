@@ -1,21 +1,19 @@
 package io.github.givimad.piperjni;
 
-import io.github.givimad.piperjni.internal.NativeUtils;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Piper JNI
- */
+import io.github.givimad.piperjni.internal.NativeUtils;
+
+/** Piper JNI */
 public class PiperJNI implements AutoCloseable {
 
     private static boolean libraryLoaded;
     private PiperConfig currentConfig;
 
-    //region native api
+    // region native api
     protected native int newConfig();
 
     protected native void freeConfig(int configRef);
@@ -28,7 +26,8 @@ public class PiperJNI implements AutoCloseable {
 
     protected native void terminateConfig(int configRef);
 
-    protected native int loadVoice(int configRef, String model, String modelConfig, long speakerId, boolean useCUDA);
+    protected native int loadVoice(
+            int configRef, String model, String modelConfig, long speakerId, boolean useCUDA);
 
     protected native void freeVoice(int voiceRef);
 
@@ -38,13 +37,17 @@ public class PiperJNI implements AutoCloseable {
 
     protected native int voiceSampleRate(int voiceRef);
 
-    private native short[] textToAudio(int configRef, int voiceRef, String text, AudioCallback audioCallback) throws IOException;
+    private native short[] textToAudio(
+            int configRef, int voiceRef, String text, AudioCallback audioCallback)
+            throws IOException;
 
     private native String getVersion();
-    //endregion
+
+    // endregion
 
     /**
      * Creates a new Piper instance.
+     *
      * @throws IOException if library registration fails
      */
     public PiperJNI() throws IOException {
@@ -62,8 +65,8 @@ public class PiperJNI implements AutoCloseable {
     }
 
     /**
-     * Initializes the piper instance configuration.
-     * Should be called before using the instance.
+     * Initializes the piper instance configuration. Should be called before using the instance.
+     *
      * @throws IOException if initialization fails.
      */
     public void initialize() throws IOException {
@@ -71,8 +74,8 @@ public class PiperJNI implements AutoCloseable {
     }
 
     /**
-     * Initializes the piper instance configuration.
-     * Should be called before using the instance.
+     * Initializes the piper instance configuration. Should be called before using the instance.
+     *
      * @param useESpeakPhonemes Support voices with ESpeak phonemes.
      * @param useTashkeelModel Support voices using the Tashkeel model.
      * @throws IOException if initialization fails.
@@ -95,9 +98,7 @@ public class PiperJNI implements AutoCloseable {
         this.currentConfig = config;
     }
 
-    /**
-     * Unload current configuration if any.
-     */
+    /** Unload current configuration if any. */
     public void terminate() {
         if (isInitialized()) {
             terminateConfig(currentConfig.ref);
@@ -108,62 +109,69 @@ public class PiperJNI implements AutoCloseable {
     /**
      * Loads piper voice model and config.
      *
-     * @param modelPath       model file path
+     * @param modelPath model file path
      * @param modelConfigPath model config file path
      * @return a {@link PiperVoice} instance
      * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized        if piper was not initialized
+     * @throws NotInitialized if piper was not initialized
      */
-    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath) throws IOException, NotInitialized {
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath)
+            throws IOException, NotInitialized {
         return loadVoice(modelPath, modelConfigPath, -1, false);
     }
 
     /**
      * Loads piper voice model and config.
      *
-     * @param modelPath       model file path
+     * @param modelPath model file path
      * @param modelConfigPath model config file path
-     * @param speakerId       Speaker id or -1.
+     * @param speakerId Speaker id or -1.
      * @return a {@link PiperVoice} instance
      * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized        if piper was not initialized
+     * @throws NotInitialized if piper was not initialized
      */
-    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId) throws IOException, NotInitialized {
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId)
+            throws IOException, NotInitialized {
         return loadVoice(modelPath, modelConfigPath, speakerId, false);
     }
 
     /**
      * Loads piper voice model and config.
      *
-     * @param modelPath       model file path
+     * @param modelPath model file path
      * @param modelConfigPath model config file path
-     * @param useCUDA         Use CUDA
+     * @param useCUDA Use CUDA
      * @return a {@link PiperVoice} instance
      * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized        if piper was not initialized
+     * @throws NotInitialized if piper was not initialized
      */
-    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, boolean useCUDA) throws IOException, NotInitialized {
+    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, boolean useCUDA)
+            throws IOException, NotInitialized {
         return loadVoice(modelPath, modelConfigPath, -1, useCUDA);
     }
 
     /**
      * Loads piper voice model and config.
      *
-     * @param modelPath       model file path
+     * @param modelPath model file path
      * @param modelConfigPath model config file path
-     * @param speakerId       Speaker id or -1.
-     * @param useCUDA         Use CUDA
+     * @param speakerId Speaker id or -1.
+     * @param useCUDA Use CUDA
      * @return a {@link PiperVoice} instance
      * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized        if piper was not initialized
+     * @throws NotInitialized if piper was not initialized
      */
-    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA) throws FileNotFoundException, NotInitialized {
+    public PiperVoice loadVoice(
+            Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA)
+            throws FileNotFoundException, NotInitialized {
         assertRegistered();
         assertInitialized();
         if (modelPath == null || !Files.exists(modelPath) || Files.isDirectory(modelPath)) {
             throw new FileNotFoundException("Model file is required");
         }
-        if (modelConfigPath == null || !Files.exists(modelConfigPath) || Files.isDirectory(modelConfigPath)) {
+        if (modelConfigPath == null
+                || !Files.exists(modelConfigPath)
+                || Files.isDirectory(modelConfigPath)) {
             throw new FileNotFoundException("Model config file is required");
         }
         return new PiperVoice(this, currentConfig, modelPath, modelConfigPath, speakerId, useCUDA);
@@ -171,6 +179,7 @@ public class PiperJNI implements AutoCloseable {
 
     /**
      * Convert text to audio using the provided voice.
+     *
      * @param voice {@link PiperVoice} instance to use.
      * @param text Text to speak.
      * @return The audio samples
@@ -183,17 +192,20 @@ public class PiperJNI implements AutoCloseable {
 
     /**
      * Convert text to audio using the provided voice and emit segments asynchronously.
+     *
      * @param voice {@link PiperVoice} instance to use.
      * @param text Text to speak.
      * @param audioCallback Callback for each audio segment.
      * @throws IOException If generation fails.
      * @throws NotInitialized If piper not initialized.
      */
-    public void textToAudio(PiperVoice voice, String text, AudioCallback audioCallback) throws IOException, NotInitialized {
+    public void textToAudio(PiperVoice voice, String text, AudioCallback audioCallback)
+            throws IOException, NotInitialized {
         textToAudioImpl(voice, text, audioCallback);
     }
 
-    private short[] textToAudioImpl(PiperVoice voice, String text, AudioCallback audioCallback) throws IOException, NotInitialized {
+    private short[] textToAudioImpl(PiperVoice voice, String text, AudioCallback audioCallback)
+            throws IOException, NotInitialized {
         assertRegistered();
         assertInitialized();
         if (voice == null) {
@@ -204,7 +216,7 @@ public class PiperJNI implements AutoCloseable {
         }
         if (text.isBlank()) {
             // return empty.
-            return new short[]{};
+            return new short[] {};
         }
         return textToAudio(currentConfig.ref, voice.ref, text, audioCallback);
     }
@@ -268,7 +280,8 @@ public class PiperJNI implements AutoCloseable {
             }
         }
         if (bundleLibraryPath == null) {
-            throw new FileNotFoundException("piper-jni: Unsupported platform " + osName + " - " + osArch + ".");
+            throw new FileNotFoundException(
+                    "piper-jni: Unsupported platform " + osName + " - " + osArch + ".");
         }
         NativeUtils.loadLibraryResource(bundleLibraryPath);
         libraryLoaded = true;
@@ -286,26 +299,22 @@ public class PiperJNI implements AutoCloseable {
         }
     }
 
-
     @Override
     public void close() {
         terminate();
     }
 
-    /**
-     * Callback for streamed audio.
-     */
+    /** Callback for streamed audio. */
     public interface AudioCallback {
         /**
          * Called once on each generated voice segment.
+         *
          * @param audioSamples The segment samples.
          */
         void onAudio(short[] audioSamples);
     }
 
-    /**
-     * Emitted if Piper instance was not initialized by calling the {@link #initialize} method.
-     */
+    /** Emitted if Piper instance was not initialized by calling the {@link #initialize} method. */
     public static class NotInitialized extends Exception {
         private NotInitialized() {
             super("Piper not initialized");
@@ -313,21 +322,18 @@ public class PiperJNI implements AutoCloseable {
     }
 
     /**
-     * In order to avoid sharing pointers between the c++ and java, we use this
-     * util base class which holds a random integer id generated in the whisper.cpp wrapper.
+     * In order to avoid sharing pointers between the c++ and java, we use this util base class
+     * which holds a random integer id generated in the whisper.cpp wrapper.
      *
      * @author Miguel Álvarez Díez - Initial contribution
      */
-    public static abstract class JNIRef implements AutoCloseable {
-        /**
-         * Native pointer reference identifier.
-         */
+    public abstract static class JNIRef implements AutoCloseable {
+        /** Native pointer reference identifier. */
         protected final int ref;
+
         private boolean released;
 
-        /**
-         * Asserts the provided pointer is still available.
-         */
+        /** Asserts the provided pointer is still available. */
         protected void assertAvailable() {
             if (this.isReleased()) {
                 throw new RuntimeException("Unavailable pointer, object is closed");
@@ -352,9 +358,7 @@ public class PiperJNI implements AutoCloseable {
             return released;
         }
 
-        /**
-         * Mark the point as released
-         */
+        /** Mark the point as released */
         protected void release() {
             released = true;
         }

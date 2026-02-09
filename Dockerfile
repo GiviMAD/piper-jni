@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+
+# Stage 1: Native library compilation
+# This stage runs on the target platform (using QEMU if needed)
+FROM maven:3.9.9-eclipse-temurin-17-focal AS native-builder
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends git build-essential curl
+# Add kitware repo for newer cmake (improves armv7l support)
+RUN curl -s https://apt.kitware.com/kitware-archive.sh | bash -s
+# Install cmake
+RUN apt-get update && apt-get install -y --no-install-recommends cmake
+
+WORKDIR /app
+
+COPY .git .git
+COPY .gitmodules .gitmodules
+COPY CMakeLists.txt .
+COPY pom.xml .
+COPY build_linux.sh .
+COPY src src
+
+ARG TARGETARCH
+
+RUN git submodule update --init
+RUN TARGETARCH=${TARGETARCH} ./build_linux.sh
+RUN mkdir -p /app/install
+RUN if [ ${TARGETARCH} = "arm" ]; then cp -r src/main/resources/debian-armv7l/* /app/install/; else cp -r src/main/resources/debian-${TARGETARCH}/* /app/install/; fi
+
+# Stage 2: Optional test execution
+FROM native-builder AS test-runner
+ARG RUN_TEST
+RUN if [ "$RUN_TEST" = "true" ]; then \
+        mvn test -Dtest="PiperJNITest#getPiperVersion"; \
+    fi
+
+# Stage 3: Export binaries
+# This stage is used to extract the built libraries from the image
+FROM scratch AS export
+COPY --from=native-builder /app/install/*.so* /
+COPY --from=native-builder /app/src/main/resources/*.zip /
+COPY --from=native-builder /app/src/main/resources/*.ort /
