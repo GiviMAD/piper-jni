@@ -1,227 +1,215 @@
 name: CI
 on:
   push:
+    branches: [ main ]
     tags: [ "v*.*.*", "v*.*.*-*" ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+
 jobs:
-  build-lib-debian-x86_64:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-      - name: Setup project dir
-        run: |
-          mkdir -p dist
-      - name: Build native library
-        run: |
-          docker build --build-arg="RUN_TEST=true" -f dockerfile . -t piperjni_binary:x86_64 --load
-          docker run --platform=amd64 -v $(pwd)/dist:/out piperjni_binary:x86_64 bash -c "cp src/main/resources/debian-amd64/*.so* /out/ && cp src/main/resources/*.ort /out/ && cp src/main/resources/*.zip /out/"
-      - name: Artifact debian x86_64
-        uses: actions/upload-artifact@v4
-        with:
-          name: debian-binary-amd64
-          path: dist/*.so*
-      - name: Artifact eSpeak data
-        uses: actions/upload-artifact@v4
-        with:
-          name: espeak-ng-data
-          path: dist/*.zip
-      - name: Artifact Tashkeel model
-        uses: actions/upload-artifact@v4
-        with:
-          name: tashkeel-model
-          path: dist/*.ort
+  build-lib:
+    name: Build Library ${{ matrix.artifact_name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x86_64
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: linux/amd64
+            artifact_name: debian-binary-amd64
+            path_suffix: debian-amd64
+          # Linux arm64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            platform: linux/arm64
+            artifact_name: debian-binary-arm64
+            path_suffix: debian-arm64
+          # Linux armv7l (using QEMU)
+          - os: ubuntu-latest
+            arch: armv7l
+            platform: linux/arm/v7
+            artifact_name: debian-binary-armv7l
+            path_suffix: debian-armv7l
+          # macOS Intel
+          - os: macos-14
+            arch: amd64
+            artifact_name: macos-binary-amd64
+          # macOS Apple Silicon
+          - os: macos-14
+            arch: arm64
+            artifact_name: macos-binary-arm64
+          # Windows x86_64
+          - os: windows-latest
+            arch: x86_64
+            artifact_name: windows-binary-x86_64
 
-  build-lib-debian-arm64:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v3
         with:
-          install: true
-      - name: Setup project dir
-        run: |
-          mkdir -p dist
-      - name: Build native library
-        run: |
-          docker build -f dockerfile . -t piperjni_binary:arm64 --platform arm64 --load
-          DOCKER_BUILDKIT=1 docker run --platform=arm64 -v $(pwd)/dist:/out piperjni_binary:arm64 bash -c "cp src/main/resources/debian-arm64/*.so* /out/"
-      - name: Artifact debian arm64
-        uses: actions/upload-artifact@v4
-        with:
-          name: debian-binary-arm64
-          path: dist/*.so*
+          submodules: recursive
 
-  build-lib-debian-arm:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Docker Setup Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-      - name: Setup project dir
-        run: |
-          mkdir -p dist
-      - name: Build native library
-        run: |
-          docker build -f dockerfile . -t piperjni_binary:armv7l --platform arm --load
-          DOCKER_BUILDKIT=1 docker run --platform=arm -v $(pwd)/dist:/out piperjni_binary:armv7l bash -c "cp src/main/resources/debian-armv7l/*.so* /out/"
-      - name: Artifact debian armv7l
-        uses: actions/upload-artifact@v4
-        with:
-          name: debian-binary-armv7l
-          path: dist/*.so*
-
-  build-lib-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-      - name: Setup project dir
+
+      # Only need QEMU if we are on x86 building for ARM (unlikely with this setup)
+      # or if the ARM64 runner needs extra help with v7 instructions.
+      - name: Set up QEMU
+        if: runner.os == 'Linux' && matrix.arch == 'armv7l'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Docker Setup Buildx
+        if: runner.os == 'Linux'
+        uses: docker/setup-buildx-action@v3
+
+      # --- Linux Build Logic (Handles x86_64, arm64, and armv7l) ---
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
         run: |
-          git submodule update --init
-          mkdir dist
-      - name: Build native library
+          mkdir -p dist
+          docker buildx build \
+            --platform ${{ matrix.platform }} \
+            --target export \
+            --output type=local,dest=dist \
+            .
+
+      # --- macOS & Windows Logic remains same as previous ---
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            arch -x86_64 ./build_macos.sh x86_64
+          else
+            ./build_macos.sh ${{ matrix.arch }}
+          fi
+          mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
         shell: powershell
         run: |
           cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src\main\resources\win-amd64
           cmake --build build --config Release
           cmake --install build
-      - name: mv native library
-        shell: powershell
-        run: |
-          mv src\main\resources\win-amd64\*.dll .\dist\
-      - name: Artifact windows x86_64
+          if (!(Test-Path dist)) { mkdir dist }
+          move-item src\main\resources\win-amd64\*.dll .\dist\
+
+      - name: Upload Library
         uses: actions/upload-artifact@v4
         with:
-          name: windows-binary-x86_64
-          path: dist/*.dll
+          name: ${{ matrix.artifact_name }}
+          path: |
+            dist/*.so*
+            dist/*.dylib
+            dist/*.dll
 
-  build-lib-macos-x86_64:
-    runs-on: macos-13
+      - name: Upload eSpeak data
+        if: matrix.arch == 'x86_64' && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: espeak-ng-data
+          path: dist/*.zip
+
+      - name: Upload Tashkeel model
+        if: matrix.arch == 'x86_64' && runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tashkeel-model
+          path: dist/*.ort
+
+  build-maven:
+    name: Maven Build
+    needs: build-lib
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: Setup project dir
+      - name: Check artifact tree
+        run: ls -R
+      - name: Setup resources
         run: |
-          mkdir -p dist
-          mkdir -p dist_arm64
-          git submodule update --init
-      - name: Build binary
-        run: |
-          ./build_macos.sh amd64
-          mv src/main/resources/macos-amd64/*.dylib dist/
-      - name: Artifact macos amd64
+          mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
+          mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
+          mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
+          mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
+          mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
+          mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
+          mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
+          mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
+          mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/
+          mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
+          mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
+          mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
+          mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
+          mv ./tashkeel-model/*.ort ./src/main/resources/
+          mv ./espeak-ng-data/*.zip ./src/main/resources/
+      - name: Build with Maven
+        run: mvn -B package -DskipTests
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: macos-binary-amd64
-          path: dist/*.dylib
-
-  build-lib-macos-arm64:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: Setup project dir
-        run: |
-          mkdir -p dist
-          git submodule update --init
-      - name: Build binary
-        run: |
-          ./build_macos.sh arm64
-          mv src/main/resources/macos-arm64/*.dylib dist/
-      - name: Artifact macos arm64
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-binary-arm64
-          path: dist/*.dylib
+          name: piper-jni
+          path: |
+            target/piper-jni-*.jar
+      - name: Download models for tests
+        run: ./download_test_model.sh
+      - name: Run tests
+        run: mvn -B test
 
   deploy:
+    name: Deploy to Maven Central
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build-lib-debian-x86_64,build-lib-debian-arm,build-lib-debian-arm64,build-lib-windows,build-lib-macos-x86_64, build-lib-macos-arm64]
+    needs: build-maven
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/download-artifact@v4
-    - name: check tree
-      run: ls -R
-    - name: setup resources
-      run: |
-        mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
-        mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
-        mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
-        mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
-        mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
-        mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
-        mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
-        mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
-        mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/
-        mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
-        mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
-        mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
-        mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
-        mv ./tashkeel-model/*.ort ./src/main/resources/
-        mv ./espeak-ng-data/*.zip ./src/main/resources/
-        
-    - name: Set up Maven Central Repository
-      uses: actions/setup-java@v4
-      with:
-        java-version: 17
-        distribution: 'zulu'
-        server-id: sonatype-nexus-staging
-        server-username: MAVEN_USERNAME
-        server-password: MAVEN_CENTRAL_TOKEN
-        gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-        gpg-passphrase: MAVEN_GPG_PASSPHRASE
-    - name: Deploy with Maven
-      id: deploy
-      run: |
-        mvn -B clean deploy -DskipTests -Pci-cd
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-        PIPER_VERSION=$(echo "${VERSION%%"-"*}")
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        echo "PIPER_VERSION=$PIPER_VERSION" >> $GITHUB_OUTPUT
-      env:
-        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      id: create_release
-      with:
-        tag_name: piper_jni_${{ steps.deploy.outputs.VERSION }}
-        name: piperJNI v${{ steps.deploy.outputs.VERSION }}
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-        body: A JNI wrapper for piper v${{ steps.deploy.outputs.PIPER_VERSION }}
-        files: |
-          target/piper-jni-${{ steps.deploy.outputs.VERSION }}.jar
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@v4
+      # Download the final JAR built in the build-maven job
+      - name: Download Maven JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: piper-jni
+          path: target/
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+          server-id: sonatype-nexus-staging
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Deploy with Maven
+        id: deploy
+        run: |
+          mvn -B deploy:deploy-file -DskipTests -Pci-cd
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          PIPER_VERSION=$(echo "${VERSION%%"-"*}")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "PIPER_VERSION=$PIPER_VERSION" >> $GITHUB_OUTPUT
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        with:
+          tag_name: piper_jni_${{ steps.deploy.outputs.VERSION }}
+          name: piperJNI v${{ steps.deploy.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: A JNI wrapper for piper v${{ steps.deploy.outputs.PIPER_VERSION }}
+          files: |
+            target/piper-jni-${{ steps.deploy.outputs.VERSION }}.jar
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
