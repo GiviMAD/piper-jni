@@ -7,7 +7,7 @@ A JNI wrapper for [piper](https://github.com/rhasspy/piper), a fast, local neura
 This library aims to support the following platforms:
 
 * Windows x86_64
-* Linux x86_64/arm64 (built with Ubuntu Focal Fossa, GLIBC version 2.31)
+* Linux x86_64/arm64/armv7l (built with Ubuntu Focal Fossa, GLIBC version 2.31)
 * macOS x86_64/arm64 (built with macOS 13 Ventura for x86_64 and macOS 14 Sonoma for arm64)
 
 The JAR includes the piper-jni native library, which contains the piper source, and the shared libraries it depends on:
@@ -75,15 +75,27 @@ You need to have Java 17 and C++ setup.
 
 After cloning the project, you need to init the piper submodule by running:
 
-```sh
+```shell
 git submodule update --init
 ```
 
-Build the piper-jni library:
+### Build with Docker (Recommended)
 
-```sh
+You can build for all supported Linux platforms (amd64, arm64, armv7l) using Docker:
+
+```shell
+./build_linux-all.sh
+```
+
+This uses `docker buildx` to build the native libraries and places them in `src/main/resources`.
+
+### Native Build (Local)
+
+If you prefer to build locally for your current platform:
+
+```shell
 # You need to set the correct resources folder as install prefix.
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src\main\resources\debian-amd64
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src/main/resources/debian-$(uname -m)
 cmake --build build --config Release
 cmake --install build
 ```
@@ -93,7 +105,7 @@ Piper voices can be downloaded from [HuggingFace](https://huggingface.co/rhasspy
 
 Finally, you can run the project's tests to confirm it works:
 
-```sh
+```shell
 # Path to piper voice model
 export VOICE_MODEL=/test-data/es_ES-sharvard-medium.onnx
 # Path to piper voice model config
@@ -102,6 +114,14 @@ export VOICE_MODEL_CONFIG=/test-data/es_ES-sharvard-medium.onnx.json
 export TEXT_TO_SPEAK="Buenos días"
 # tests will generate test.wav in the root dir.
 mvn test
+```
+
+### Java Build
+
+Finally, you can build the Java project:
+
+```shell
+mvn package
 ```
 
 ## Extending the Native API
