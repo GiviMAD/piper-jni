@@ -25,6 +25,7 @@ RUN git submodule update --init
 RUN TARGETARCH=${TARGETARCH} ./build_linux.sh
 RUN mkdir -p /app/install
 RUN if [ ${TARGETARCH} = "arm" ]; then cp -r src/main/resources/debian-armv7l/* /app/install/; else cp -r src/main/resources/debian-${TARGETARCH}/* /app/install/; fi
+RUN if [ ${TARGETARCH} = "amd64" ]; then cp src/main/resources/*.zip /app/install/; fi
 
 # Stage 2: Optional test execution
 FROM native-builder AS test-runner
@@ -36,6 +37,4 @@ RUN if [ "$RUN_TEST" = "true" ]; then \
 # Stage 3: Export binaries
 # This stage is used to extract the built libraries from the image
 FROM scratch AS export
-COPY --from=native-builder /app/install/*.so* /
-COPY --from=native-builder /app/src/main/resources/*.zip /
-COPY --from=native-builder /app/src/main/resources/*.ort /
+COPY --from=native-builder /app/install/* /

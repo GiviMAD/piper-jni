@@ -66,9 +66,6 @@ public class NativeUtils {
     /** Espeak data path in temporary directory. */
     private static Path espeakNGDir;
 
-    /** Espeak data path in temporary directory. */
-    private static Path tashkeelModelFile;
-
     /** Private constructor - this class will never be instanced */
     private NativeUtils() {}
 
@@ -124,14 +121,6 @@ public class NativeUtils {
             Files.delete(espeakNGZip);
         }
         return espeakNGDir.toAbsolutePath();
-    }
-
-    public static Path getTashkeelModel() throws IOException {
-        if (tashkeelModelFile == null || !Files.exists(tashkeelModelFile)) {
-            String modelName = "libtashkeel_model.ort";
-            tashkeelModelFile = NativeUtils.extractToTempDir("/" + modelName, modelName);
-        }
-        return tashkeelModelFile.toAbsolutePath();
     }
 
     public static void extractZipTo(Path archiveFile, Path destPath) throws IOException {

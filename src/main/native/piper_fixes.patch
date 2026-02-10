@@ -1,0 +1,46 @@
+diff --git a/libpiper/include/piper_impl.hpp b/libpiper/include/piper_impl.hpp
+index aa12a1d..9befcf7 100644
+--- a/libpiper/include/piper_impl.hpp
++++ b/libpiper/include/piper_impl.hpp
+@@ -35,7 +35,7 @@ const float DEFAULT_NOISE_W_SCALE = 0.8f;
+ const int DEFAULT_HOP_LENGTH = 256;
+
+ // onnx
+-Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
++inline Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
+
+ // espeak
+ #define CLAUSE_INTONATION_FULL_STOP 0x00000000
+@@ -87,7 +87,7 @@ struct piper_synthesizer {
+ };
+
+ // Get the first UTF-8 codepoint of a string
+-std::optional<Phoneme> get_codepoint(std::string s) {
++inline std::optional<Phoneme> get_codepoint(std::string s) {
+     auto view = una::views::utf8(s);
+     auto it = view.begin();
+
+diff --git a/libpiper/src/piper.cpp b/libpiper/src/piper.cpp
+index 774e87d..49e12f5 100644
+--- a/libpiper/src/piper.cpp
++++ b/libpiper/src/piper.cpp
+@@ -340,9 +340,17 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
+                                                "scales", "sid"};
+
+     // Get all output names
+-    std::vector<std::string> output_names_strs =
+-        synth->session->GetOutputNames();
++    size_t num_outputs = synth->session->GetOutputCount();
++    std::vector<std::string> output_names_strs;
++    output_names_strs.reserve(num_outputs);
++    Ort::AllocatorWithDefaultOptions allocator;
++    for (size_t i = 0; i < num_outputs; i++) {
++        auto name = synth->session->GetOutputNameAllocated(i, allocator);
++        output_names_strs.push_back(name.get());
++    }
++
+     std::vector<const char *> output_names;
++    output_names.reserve(num_outputs);
+     for (const auto &name : output_names_strs) {
+         output_names.push_back(name.c_str());
+     }

@@ -4,8 +4,29 @@ cmake_minimum_required(VERSION 3.13)
 
 project(piper-jni C CXX)
 
-file(READ "${CMAKE_CURRENT_LIST_DIR}/src/main/native/piper/VERSION" piper_version)
-string(REGEX REPLACE "\n$" "" piper_version "${piper_version}")
+# Apply patches to piper submodule
+set(PIPER_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/piper_patched/piper")
+
+# Copy piper source to build directory to apply patches without modifying source tree
+file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/piper_patched")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/main/native/piper" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/piper_patched" PATTERN ".git" EXCLUDE)
+
+# Apply patch
+execute_process(
+    COMMAND patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/src/main/native/piper_fixes.patch"
+    WORKING_DIRECTORY "${PIPER_SRC_DIR}"
+    RESULT_VARIABLE patch_result
+)
+if(NOT patch_result EQUAL 0)
+    message(FATAL_ERROR "Failed to apply patch to piper source")
+endif()
+
+file(READ "${PIPER_SRC_DIR}/setup.py" setup_py_content)
+string(REGEX MATCH "version=\"([0-9]+\\.[0-9]+\\.[0-9]+)\"" _ "${setup_py_content}")
+if(NOT CMAKE_MATCH_1)
+    message(FATAL_ERROR "Failed to extract piper version from setup.py.")
+endif()
+set(piper_version "\"${CMAKE_MATCH_1}\"")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -27,7 +48,7 @@ elseif(NOT APPLE)
   string(APPEND CMAKE_C_FLAGS " -Wall -Wextra")
 endif()
 
-add_library (piper-jni SHARED src/main/native/io_github_givimad_piperjni_PiperJNI.cpp src/main/native/piper/src/cpp/piper.cpp)
+add_library (piper-jni SHARED src/main/native/io_github_givimad_piperjni_PiperJNI.cpp ${PIPER_SRC_DIR}/libpiper/src/piper.cpp)
 add_custom_target(espeak-ng-data ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/espeak-ng-data.zip")
 
 # NOTE: external project prefix are shortened because of path length restrictions on Windows
@@ -121,7 +142,7 @@ target_link_directories(piper-jni PUBLIC
 
 target_include_directories(piper-jni PUBLIC
   ${JNI_INCLUDE_DIRS}
-  src/main/native/piper/src/cpp
+  ${PIPER_SRC_DIR}/libpiper/include
   ${FMT_DIR}/include
   ${SPDLOG_DIR}/include
   ${PIPER_PHONEMIZE_DIR}/include
@@ -158,7 +179,3 @@ install(
   DESTINATION ${CMAKE_INSTALL_PREFIX}/..
 )
 
-install(
-  FILES ${PIPER_PHONEMIZE_DIR}/share/libtashkeel_model.ort
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/..
-)
