@@ -55,36 +55,6 @@ add_custom_target(espeak-ng-data ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/espeak
 # NOTE: onnxruntime is pulled from piper-phonemize
 
 
-# ---- fmt ---
-
-if(NOT DEFINED FMT_DIR)
-  set(FMT_VERSION "10.0.0")
-  set(FMT_DIR "${CMAKE_CURRENT_BINARY_DIR}/fi")
-
-  include(ExternalProject)
-  ExternalProject_Add(
-    fmt_external
-    PREFIX "${CMAKE_CURRENT_BINARY_DIR}/f"
-    URL "https://github.com/fmtlib/fmt/archive/refs/tags/${FMT_VERSION}.zip"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${FMT_DIR} -DFMT_TEST:BOOL=OFF -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}
-  )
-  add_dependencies(piper-jni fmt_external)
-endif()
-
-# ---- spdlog ---
-
-if(NOT DEFINED SPDLOG_DIR)
-  set(SPDLOG_DIR "${CMAKE_CURRENT_BINARY_DIR}/si")
-  set(SPDLOG_VERSION "1.12.0")
-  ExternalProject_Add(
-    spdlog_external
-    PREFIX "${CMAKE_CURRENT_BINARY_DIR}/s"
-    URL "https://github.com/gabime/spdlog/archive/refs/tags/v${SPDLOG_VERSION}.zip"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${SPDLOG_DIR} -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=${CMAKE_OSX_DEPLOYMENT_TARGET}
-  )
-  add_dependencies(piper-jni spdlog_external)
-endif()
-
 # ---- piper-phonemize ---
 
 if(NOT DEFINED PIPER_PHONEMIZE_DIR)

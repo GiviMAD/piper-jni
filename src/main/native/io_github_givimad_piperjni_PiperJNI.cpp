@@ -5,7 +5,6 @@
 #include "io_github_givimad_piperjni_PiperJNI.h"
 #include "piper.h"
 #include "piper_impl.hpp"
-#include <spdlog/spdlog.h>
 
 // Custom deleter for piper_synthesizer to use with smart pointers
 struct PiperDeleter {
@@ -20,17 +19,6 @@ using PiperVoicePtr = std::shared_ptr<piper_synthesizer>;
 
 std::map<int, PiperVoicePtr> voiceMap;
 std::mutex voiceMapMutex;
-
-// Disable library log
-class StartUp
-{
-public:
-   StartUp()
-   {
-    spdlog::set_level(spdlog::level::off);
-   }
-};
-StartUp startup;
 
 // Exception helper
 /// From https://stackoverflow.com/a/12014833/6189530
