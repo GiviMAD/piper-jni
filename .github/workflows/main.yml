@@ -4,7 +4,6 @@ on:
     branches: [ main ]
     tags: [ "v*.*.*", "v*.*.*-*" ]
   pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -116,13 +115,6 @@ jobs:
           name: espeak-ng-data
           path: dist/*.zip
 
-      - name: Upload Tashkeel model
-        if: matrix.arch == 'x86_64' && runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tashkeel-model
-          path: dist/*.ort
-
   build-maven:
     name: Maven Build
     needs: build-lib
@@ -147,7 +139,6 @@ jobs:
           mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
           mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
           mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
-          mv ./tashkeel-model/*.ort ./src/main/resources/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
       - name: Build with Maven
         run: mvn -B package -DskipTests

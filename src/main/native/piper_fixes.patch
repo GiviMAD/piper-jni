@@ -24,7 +24,36 @@ diff --git a/libpiper/src/piper.cpp b/libpiper/src/piper.cpp
 index 774e87d..49e12f5 100644
 --- a/libpiper/src/piper.cpp
 +++ b/libpiper/src/piper.cpp
-@@ -340,9 +340,17 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
+@@ -5,6 +5,11 @@
+ #include <fstream>
+ #include <limits>
+
++#ifdef _WIN32
++#define NOMINMAX
++#include <windows.h>
++#endif
++
+ #include <espeak-ng/speak_lib.h>
+
+ using json = nlohmann::json;
+@@ -96,8 +101,16 @@
+     synth->session_options.DisableMemPattern();
+     synth->session_options.DisableProfiling();
+
++#ifdef _WIN32
++    int size_needed = MultiByteToWideChar(CP_UTF8, 0, model_path, -1, NULL, 0);
++    std::wstring model_path_w(size_needed, 0);
++    MultiByteToWideChar(CP_UTF8, 0, model_path, -1, &model_path_w[0], size_needed);
++    synth->session = std::make_unique<Ort::Session>(
++        Ort::Session(ort_env, model_path_w.c_str(), synth->session_options));
++#else
+     synth->session = std::make_unique<Ort::Session>(
+         Ort::Session(ort_env, model_path, synth->session_options));
++#endif
+
+     return synth;
+ }
+@@ -340,9 +353,17 @@
                                                 "scales", "sid"};
 
      // Get all output names
