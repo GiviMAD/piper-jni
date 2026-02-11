@@ -208,6 +208,36 @@
           </execution>
         </executions>
       </plugin>
+      <!-- License Plugin -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>2.7.0</version>
+        <configuration>
+          <inceptionYear>2023</inceptionYear>
+          <licenseName>apache_v2</licenseName>
+          <organizationName>Miguel Álvarez Díez</organizationName>
+          <copyrightOwners>Contributors to whisper-jni</copyrightOwners>
+          <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+          <useJavaNoReformatCommentStartTag>false</useJavaNoReformatCommentStartTag>
+          <trimHeaderLine>true</trimHeaderLine>
+          <failOnMissingHeader>true</failOnMissingHeader>
+          <failOnNotUptodateHeader>true</failOnNotUptodateHeader>
+
+          <roots>
+            <root>src/main/java</root>
+            <root>src/test/java</root>
+          </roots>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check-file-header</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <profiles>
