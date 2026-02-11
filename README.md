@@ -14,14 +14,6 @@ The JAR includes the piper-jni native library, which contains the [Piper](https:
 and the shared libraries it depends on:
 [espeak](https://espeak.sourceforge.net), [piper-phonemize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
 
-## Licensing
-
-The Java source code of this program, as well as JAR builds that do not include the Piper native library, are made
-available under the terms of the [Apache License, Version 2.0](LICENSE.APACHE).
-
-However, JAR builds of this program that include the Piper native library constitute a combined work and are made
-available as a whole under the terms of the [GNU General Public License, Version 3.0](LICENSE).
-
 ## Usage
 
 The package is distributed through [Maven Central](https://central.sonatype.com/artifact/io.github.givimad/piper-jni):

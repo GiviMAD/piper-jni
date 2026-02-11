@@ -13,14 +13,14 @@
 
   <licenses>
     <license>
-      <name>GNU General Public License, Version 3.0</name>
-      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
-      <comments>Applies to JAR builds with the native libraries included</comments>
-    </license>
-    <license>
       <name>Apache License, Version 2.0</name>
       <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <comments>Applies to the Java source code and JAR builds without the native libraries included</comments>
+      <comments>Applies to the Java source code and compiled class files.</comments>
+    </license>
+    <license>
+      <name>GNU General Public License, Version 3.0</name>
+      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+      <comments>Applies to JAR builds that include the Piper native library (Combined Work).</comments>
     </license>
   </licenses>
 
