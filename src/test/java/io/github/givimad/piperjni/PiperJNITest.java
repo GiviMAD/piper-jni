@@ -95,8 +95,7 @@ public class PiperJNITest {
     }
 
     @Test
-    public void createAudioData()
-            throws IOException, ConfigurationException, PiperJNI.NotInitialized {
+    public void createAudioData() throws IOException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
@@ -126,8 +125,7 @@ public class PiperJNITest {
     }
 
     @Test
-    public void streamAudioData()
-            throws ConfigurationException, IOException, PiperJNI.NotInitialized {
+    public void streamAudioData() throws IOException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
