@@ -1,11 +1,7 @@
-#include <iostream>
-#include <map>
-#include <vector>
-#include <string>
-#include <mutex>
-#include <memory>
-#include <condition_variable>
-#include <thread>
+#include "mutex"
+#include "condition_variable"
+#include "atomic"
+#include "thread"
 #include "io_github_givimad_piperjni_PiperJNI.h"
 #include "piper.h"
 #include "piper_impl.hpp"
@@ -42,7 +38,7 @@ struct NewJavaException {
     NewJavaException(JNIEnv * env, const char* type="", const char* message="")
     {
         jclass newExcCls = env->FindClass(type);
-        if (newExcCls != NULL)
+        if (newExcCls != nullptr)
             env->ThrowNew(newExcCls, message);
         // if it is null, a NoClassDefFoundError was already thrown
     }
@@ -81,26 +77,21 @@ public:
     operator const char*() const { return cstr; }
 };
 
+std::atomic<int> nextVoiceId{0};
+
 // Helper function to get a unique voice id
 int getVoiceId() {
-    int i = 0;
-    while (i++ < 1000) {
-        int id = rand();
-        if(!voiceMap.count(id)) {
-            return id;
-        }
-    }
-    throw std::runtime_error("Wrapper error: Unable to get voice id");
+    return nextVoiceId.fetch_add(1);
 }
 
 // Background consumer thread callback function
-void jCallbackOutputProc(JavaVM *jvm, jobject &jAudioCallback, std::vector<int16_t> &sharedAudioBuffer, std::mutex &mutAudio,
-                   std::condition_variable &cvAudio, bool &audioReady, bool &audioFinished) {
+void jCallbackOutputProc(JavaVM *jvm, const jobject &jAudioCallback, std::vector<int16_t> &sharedAudioBuffer, std::mutex &mutAudio,
+                   std::condition_variable &cvAudio, bool &audioReady, const bool &audioFinished) {
     JNIEnv *env;
     bool jvmAttached = false;
 
     // Attach this new background thread to the JVM
-    if (jvm->AttachCurrentThread((void**)&env, NULL) == JNI_OK) {
+    if (jvm->AttachCurrentThread(reinterpret_cast<void **>(&env), nullptr) == JNI_OK) {
         jvmAttached = true;
     } else {
         NewJavaException(env, "java/lang/RuntimeException", "Failed to attach callback thread to JVM");
@@ -113,7 +104,7 @@ void jCallbackOutputProc(JavaVM *jvm, jobject &jAudioCallback, std::vector<int16
         {
             // Wait for the Producer to signal that audio data is ready
             std::unique_lock lockAudio{mutAudio};
-            cvAudio.wait(lockAudio, [&audioReady] { return audioReady; });
+            cvAudio.wait(lockAudio, [&]{ return audioReady || audioFinished; });
 
             if (sharedAudioBuffer.empty() && audioFinished) {
                 break; // Exit when completely done
@@ -223,7 +214,6 @@ JNIEXPORT jshortArray JNICALL Java_io_github_givimad_piperjni_PiperJNI_textToAud
              return nullptr;
         }
 
-        std::vector<int16_t> fullAudioBuffer;
         piper_audio_chunk chunk;
         int ret;
 
@@ -257,9 +247,8 @@ JNIEXPORT jshortArray JNICALL Java_io_github_givimad_piperjni_PiperJNI_textToAud
                       // Convert float samples to int16
                       for (size_t i = 0; i < chunk.num_samples; ++i) {
                           float val = chunk.samples[i];
-                          if (val > 1.0f) val = 1.0f;
-                          if (val < -1.0f) val = -1.0f;
-                          chunkSamples.push_back((int16_t)(val * 32767.0f));
+                          val = std::max(-1.0f, std::min(1.0f, val));
+                          chunkSamples.push_back(static_cast<int16_t>(val * 32767.0f));
                       }
 
                       // Signal to the consumer that audio data is ready
@@ -286,22 +275,22 @@ JNIEXPORT jshortArray JNICALL Java_io_github_givimad_piperjni_PiperJNI_textToAud
             return nullptr;
         } else {
             // Blocking Mode/Synchronous Batch Mode
+            std::vector<int16_t> fullAudioBuffer;
             while ((ret = piper_synthesize_next(voice.get(), &chunk)) != PIPER_DONE) {
                  if (ret != PIPER_OK) break;
                  if (chunk.num_samples > 0) {
                       // Convert float samples to int16
                       for (size_t i = 0; i < chunk.num_samples; ++i) {
                           float val = chunk.samples[i];
-                          if (val > 1.0f) val = 1.0f;
-                          if (val < -1.0f) val = -1.0f;
-                          fullAudioBuffer.push_back((int16_t)(val * 32767.0f));
+                          val = std::max(-1.0f, std::min(1.0f, val));
+                          fullAudioBuffer.push_back(static_cast<int16_t>(val * 32767.0f));
                       }
                  }
             }
 
             // Return the full audio buffer
             jshortArray jAudioBuffer = env->NewShortArray(fullAudioBuffer.size());
-            jshort *jSamples = env->GetShortArrayElements(jAudioBuffer, NULL);
+            jshort *jSamples = env->GetShortArrayElements(jAudioBuffer, nullptr);
             for (size_t index = 0; index < fullAudioBuffer.size(); ++index) {
                 jSamples[index] = (jshort) fullAudioBuffer[index];
             }
@@ -310,7 +299,7 @@ JNIEXPORT jshortArray JNICALL Java_io_github_givimad_piperjni_PiperJNI_textToAud
         }
     } catch (const std::exception&) {
         swallow_cpp_exception_and_throw_java(env);
-        return NULL;
+        return nullptr;
     }
 }
 
