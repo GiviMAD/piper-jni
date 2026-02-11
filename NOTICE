@@ -14,7 +14,12 @@ https://github.com/GiviMAD/piper-jni
 
 == Third-party Content
 
-piper1-gpl
+piper
+* License: GPL v3.0 License
+* Project: https://github.com/OHF-Voice/piper1-gpl
+* Source: https://github.com/OHF-Voice/piper1-gpl
+
+piper-phonemize
 * License: GPL v3.0 License
 * Project: https://github.com/OHF-Voice/piper1-gpl
 * Source: https://github.com/OHF-Voice/piper1-gpl

@@ -12,7 +12,7 @@ This library aims to support the following platforms:
 
 The JAR includes the piper-jni native library, which contains the [Piper](https://github.com/OHF-Voice/piper1-gpl) source,
 and the shared libraries it depends on:
-[espeak](https://espeak.sourceforge.net), [piper-phonetize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
+[espeak](https://espeak.sourceforge.net), [piper-phonemize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
 
 ## Licensing
 
