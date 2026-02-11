@@ -10,10 +10,19 @@ This library aims to support the following platforms:
 * Linux x86_64/arm64/armv7l (built with Ubuntu Focal Fossa, GLIBC version 2.31)
 * macOS x86_64/arm64 (built with macOS 13 Ventura for x86_64 and macOS 14 Sonoma for arm64)
 
-The JAR includes the piper-jni native library, which contains the piper source, and the shared libraries it depends on:
-[espeak](https://espeak.sourceforge.net), [piper-phonetize](https://github.com/rhasspy/piper-phonemize) and [onxxruntime](https://onnxruntime.ai).
+The JAR includes the piper-jni native library, which contains the [Piper](https://github.com/OHF-Voice/piper1-gpl) source,
+and the shared libraries it depends on:
+[espeak](https://espeak.sourceforge.net), [piper-phonetize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
 
-## Installation
+## Licensing
+
+The Java source code of this program, as well as JAR builds that do not include the Piper native library, are made
+available under the terms of the [Apache License, Version 2.0](LICENSE.APACHE).
+
+However, JAR builds of this program that include the Piper native library constitute a combined work and are made
+available as a whole under the terms of the [GNU General Public License, Version 3.0](LICENSE).
+
+## Usage
 
 The package is distributed through [Maven Central](https://central.sonatype.com/artifact/io.github.givimad/piper-jni):
 
