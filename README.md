@@ -60,7 +60,7 @@ try (var voice = piper.loadVoice(Paths.get("/path/to/en_US-lessac-medium.onnx"),
 
 ## Development
 
-You need to have Java 17 and C++ setup.
+You need to have Java >= 11 and C++ setup.
 
 After cloning the project, you need to init the piper submodule by running:
 
