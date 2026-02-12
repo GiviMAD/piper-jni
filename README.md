@@ -7,8 +7,8 @@ A JNI wrapper for [Piper](https://github.com/OHF-Voice/piper1-gpl), a fast, loca
 This library aims to support the following platforms:
 
 * Windows x86_64
-* Linux x86_64/arm64/armv7l (built with Ubuntu Focal Fossa, GLIBC version 2.31)
-* macOS x86_64/arm64 (built with for macOS 14 Sonoma and newer)
+* Linux x86_64/arm64 (built with Ubuntu Focal Fossa, GLIBC version 2.31)
+* macOS x86_64/arm64 (built for macOS 14 Sonoma and newer)
 
 The JAR includes the piper-jni native library, which contains the [Piper](https://github.com/OHF-Voice/piper1-gpl) source,
 and the shared libraries it depends on:

@@ -71,20 +71,29 @@ ExternalProject_Add(espeak_ng_external
 # Dependency: ONNX Runtime
 set(ONNXRUNTIME_VERSION "1.22.0")
 if(WIN32)
+    # Windows x86_64
     set(ONNXRUNTIME_PREFIX "onnxruntime-win-x64-${ONNXRUNTIME_VERSION}")
     set(ONNXRUNTIME_EXT "zip")
 elseif(APPLE)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
+        # macOS x86_64
         set(ONNXRUNTIME_PREFIX "onnxruntime-osx-x86_64-${ONNXRUNTIME_VERSION}")
-    else()
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL arm64)
+        # MacOS Apple Silicon
         set(ONNXRUNTIME_PREFIX "onnxruntime-osx-arm64-${ONNXRUNTIME_VERSION}")
+    else()
+        message(FATAL_ERROR "Unsupported architecture for onnxruntime")
     endif()
     set(ONNXRUNTIME_EXT "tgz")
 else()
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
+        # Linux x86_64
         set(ONNXRUNTIME_PREFIX "onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}")
     elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL aarch64)
+        # Linux ARM 64-bit
         set(ONNXRUNTIME_PREFIX "onnxruntime-linux-aarch64-${ONNXRUNTIME_VERSION}")
+    else()
+        message(FATAL_ERROR "Unsupported architecture for onnxruntime")
     endif()
     set(ONNXRUNTIME_EXT "tgz")
 endif()

@@ -25,12 +25,6 @@ jobs:
             platform: linux/arm64
             artifact_name: debian-binary-arm64
             path_suffix: debian-arm64
-          # Linux armv7l (using QEMU)
-          - os: ubuntu-latest
-            arch: armv7l
-            platform: linux/arm/v7
-            artifact_name: debian-binary-armv7l
-            path_suffix: debian-armv7l
           # macOS Intel
           - os: macos-14
             arch: amd64
@@ -56,17 +50,11 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # Only need QEMU if we are on x86 building for ARM (unlikely with this setup)
-      # or if the ARM64 runner needs extra help with v7 instructions.
-      - name: Set up QEMU
-        if: runner.os == 'Linux' && matrix.arch == 'armv7l'
-        uses: docker/setup-qemu-action@v3
-
       - name: Docker Setup Buildx
         if: runner.os == 'Linux'
         uses: docker/setup-buildx-action@v3
 
-      # --- Linux Build Logic (Handles x86_64, arm64, and armv7l) ---
+      # --- Linux Build Logic (Handles x86_64, arm64) ---
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -130,8 +118,6 @@ jobs:
           mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
           mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
           mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
-          mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
-          mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
           mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
           mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
           mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/

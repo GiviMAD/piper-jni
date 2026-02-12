@@ -222,9 +222,6 @@ public class PiperJNI implements AutoCloseable {
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
                 NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so.1.22.0");
                 bundleLibraryPath = "/debian-arm64/libpiper-jni.so";
-            } else if (osArch.contains("armv7") || osArch.contains("arm")) {
-                NativeUtils.loadLibraryResource("/debian-armv7l/libonnxruntime.so.1.22.0");
-                bundleLibraryPath = "/debian-armv7l/libpiper-jni.so";
             }
         } else if (osName.contains("mac") || osName.contains("darwin")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
