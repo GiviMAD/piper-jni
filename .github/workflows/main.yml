@@ -6,55 +6,51 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  JAVA_VERSION: 17
+  JAVA_DISTRO: temurin
+
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          # Define your matrix as a JSON object
+          MATRIX_JSON='{
+            "include": [
+              {"os": "ubuntu-24.04", "arch": "x86_64", "platform": "linux/amd64", "artifact_name": "debian-binary-amd64"},
+              {"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64", "artifact_name": "debian-binary-arm64"},
+              {"os": "macos-14", "arch": "amd64", "artifact_name": "macos-binary-amd64"},
+              {"os": "macos-14", "arch": "arm64", "artifact_name": "macos-binary-arm64"},
+              {"os": "windows-latest", "arch": "x86_64", "artifact_name": "windows-binary-x86_64"}
+            ]
+          }'
+          echo "matrix=$(echo $MATRIX_JSON | jq -c .)" >> $GITHUB_OUTPUT
+
   build-lib:
-    name: Build Library ${{ matrix.artifact_name }}
+    name: Build Library (${{ matrix.artifact_name }})
+    needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # Linux x86_64
-          - os: ubuntu-latest
-            arch: x86_64
-            platform: linux/amd64
-            artifact_name: debian-binary-amd64
-            path_suffix: debian-amd64
-          # Linux arm64
-          - os: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
-            artifact_name: debian-binary-arm64
-            path_suffix: debian-arm64
-          # macOS Intel
-          - os: macos-14
-            arch: amd64
-            artifact_name: macos-binary-amd64
-          # macOS Apple Silicon
-          - os: macos-14
-            arch: arm64
-            artifact_name: macos-binary-arm64
-          # Windows x86_64
-          - os: windows-latest
-            arch: x86_64
-            artifact_name: windows-binary-x86_64
-
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
+      # --- Checkout and Setup ---
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+      # --- Linux Build Logic ---
       - name: Docker Setup Buildx
         if: runner.os == 'Linux'
         uses: docker/setup-buildx-action@v3
-
-      # --- Linux Build Logic (Handles x86_64, arm64) ---
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -63,8 +59,7 @@ jobs:
             --target export \
             --output type=local,dest=dist \
             .
-
-      # --- macOS & Windows Logic remains same as previous ---
+      # --- macOS Build Logic ---
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -76,7 +71,7 @@ jobs:
           fi
           mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/lib
           tar -cvf dist/piper-jni-libs.tar -C dist/lib .
-
+      # --- Windows Build Logic ---
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: powershell
@@ -88,14 +83,12 @@ jobs:
           if (!(Test-Path dist\lib)) { mkdir dist\lib }
           move-item src\main\resources\win-amd64\*.dll .\dist\lib\
           tar -cvf dist\piper-jni-libs.tar -C dist\lib .
-
+      # --- Upload Artifacts ---
       - name: Upload Library
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: |
-            dist/piper-jni-libs.tar
-
+          path: dist/piper-jni-libs.tar
       - name: Upload eSpeak data
         if: matrix.arch == 'x86_64' && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
@@ -109,9 +102,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
       - uses: actions/download-artifact@v4
-      - name: Check artifact tree
-        run: ls -R
       - name: Setup resources
         run: |
           tar -xvf ./debian-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
@@ -120,24 +116,65 @@ jobs:
           tar -xvf ./macos-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/macos-arm64/
           tar -xvf ./windows-binary-x86_64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
-      - name: Build with Maven
-        run: mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
-      - name: Bundle as tarball
+      - name: Bundle resources as tarball
         run: |
           mkdir -p dist
-          cp target/piper-jni-*.jar dist/
-          rm dist/piper-jni-*-sources.jar
-          tar -cvf dist/target.tar -C dist .
-      - name: Upload JAR
+          tar -cvf dist/resources.tar -C ./src/main/resources/ .
+      - name: Upload resources tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: piper-jni-resources
+          path: dist/resources.tar
+      - name: Build with Maven
+        run: mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
+      - name: Bundle JAR as tarball
+        run: |
+          mkdir -p dist/target
+          cp target/piper-jni-*.jar dist/target/
+          rm dist/target/piper-jni-*-sources.jar
+          tar -cvf dist/jar.tar -C dist/target/ .
+      - name: Upload JAR tarball
         uses: actions/upload-artifact@v4
         with:
           name: piper-jni
-          path: |
-            dist/*.tar
+          path: dist/jar.tar
       - name: Download models for tests
         run: ./download_test_model.sh
       - name: Run tests
         run: mvn -B test
+
+  test-maven:
+    name: Maven Test (${{ matrix.artifact_name }})
+    needs: [setup-matrix, build-maven]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: piper-jni-resources
+          path: dist/
+      - name: Extract resources tarball
+        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+      - name: Download models
+        run: ./download_test_model.sh
+      - name: Run Maven Tests
+        shell: bash
+        run: |
+          # Specific check for macOS Intel on ARM runner
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "amd64" ]]; then
+            echo "Running tests via Rosetta for x86_64"
+            arch -x86_64 mvn -B test
+          else
+            mvn -B test
+          fi
 
   deploy:
     name: Deploy to Maven Central
