@@ -58,7 +58,6 @@ jobs:
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p dist
           docker buildx build \
             --platform ${{ matrix.platform }} \
             --target export \
@@ -69,13 +68,14 @@ jobs:
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
-          mkdir -p dist
+          mkdir -p dist/lib
           if [ "${{ matrix.arch }}" = "amd64" ]; then
             arch -x86_64 ./build_macos.sh x86_64
           else
             ./build_macos.sh ${{ matrix.arch }}
           fi
-          mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/
+          mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/lib
+          tar -cvf dist/piper-jni-libs.tar -C dist/lib .
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -85,16 +85,16 @@ jobs:
           cmake --build build --config Release
           cmake --install build
           if (!(Test-Path dist)) { mkdir dist }
-          move-item src\main\resources\win-amd64\*.dll .\dist\
+          if (!(Test-Path dist\lib)) { mkdir dist\lib }
+          move-item src\main\resources\win-amd64\*.dll .\dist\lib\
+          tar -cvf dist\piper-jni-libs.tar -C dist\lib .
 
       - name: Upload Library
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            dist/*.so*
-            dist/*.dylib
-            dist/*.dll
+            dist/piper-jni-libs.tar
 
       - name: Upload eSpeak data
         if: matrix.arch == 'x86_64' && runner.os == 'Linux'
@@ -114,15 +114,11 @@ jobs:
         run: ls -R
       - name: Setup resources
         run: |
-          mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
-          mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
-          mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
-          mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
-          mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
-          mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
-          mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
+          tar -xvf ./debian-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
+          tar -xvf ./debian-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/debian-arm64/
+          tar -xvf ./macos-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/macos-amd64/
+          tar -xvf ./macos-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/macos-arm64/
+          tar -xvf ./windows-binary-x86_64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
       - name: Build with Maven
         run: mvn -B package -DskipTests
