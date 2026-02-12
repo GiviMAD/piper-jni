@@ -19,7 +19,7 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/main/native/piper" DESTINATION "${CMA
 
 # Apply patch
 execute_process(
-    COMMAND patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/src/main/native/piper_fixes.patch"
+    COMMAND patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/src/main/native/piper.patch"
     WORKING_DIRECTORY "${PIPER_SRC_DIR}"
     RESULT_VARIABLE patch_result
 )
