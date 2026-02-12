@@ -147,15 +147,15 @@ target_link_libraries(piper-jni
 
 # Asset Packaging (espeak-ng-data)
 set(ESPEAKNG_DATA_SRC ${ESPEAKNG_INSTALL_DIR}/share/espeak-ng-data)
-set($ESPEAKNG_DATA_ZIP "${CMAKE_CURRENT_BINARY_DIR}/espeak-ng-data.zip")
+set(ESPEAKNG_DATA_ZIP ${CMAKE_CURRENT_BINARY_DIR}/espeak-ng-data.zip)
 add_custom_command(
-    OUTPUT ${$ESPEAKNG_DATA_ZIP}
-    COMMAND ${CMAKE_COMMAND} -E tar "cf" ${$ESPEAKNG_DATA_ZIP} --format=zip .
+    OUTPUT ${ESPEAKNG_DATA_ZIP}
+    COMMAND ${CMAKE_COMMAND} -E tar "cf" ${ESPEAKNG_DATA_ZIP} --format=zip .
     WORKING_DIRECTORY ${ESPEAKNG_DATA_SRC}
     DEPENDS espeak_ng_external
     COMMENT "Zipping espeak-ng-data"
 )
-add_custom_target(espeak-ng-data ALL DEPENDS ${$ESPEAKNG_DATA_ZIP})
+add_custom_target(espeak-ng-data ALL DEPENDS ${ESPEAKNG_DATA_ZIP})
 
 # Install
 install(TARGETS piper-jni DESTINATION ${CMAKE_INSTALL_PREFIX})
@@ -168,4 +168,4 @@ install(
 )
 
 # Install generated espeak-ng-data.zip
-install(FILES ${$ESPEAKNG_DATA_ZIP} DESTINATION ${CMAKE_INSTALL_PREFIX}/..)
+install(FILES ${ESPEAKNG_DATA_ZIP} DESTINATION ${CMAKE_INSTALL_PREFIX}/..)
