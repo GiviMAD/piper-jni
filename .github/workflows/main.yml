@@ -121,13 +121,19 @@ jobs:
           tar -xvf ./windows-binary-x86_64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
       - name: Build with Maven
-        run: mvn -B package -DskipTests
+        run: mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
+      - name: Bundle as tarball
+        run: |
+          mkdir -p dist
+          cp target/piper-jni-*.jar dist/
+          rm dist/piper-jni-*-sources.jar
+          tar -cvf dist/target.tar -C dist .
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: piper-jni
           path: |
-            target/piper-jni-*.jar
+            dist/*.tar
       - name: Download models for tests
         run: ./download_test_model.sh
       - name: Run tests
