@@ -168,12 +168,17 @@ jobs:
       - name: Run Maven Tests
         shell: bash
         run: |
+          # Use -DforkCount=0 to run tests in the same process as Maven.
+          # This avoids the "Abort trap 6" caused by the fork losing library context.
+          # Also explicitly set the native library path just in case.
+          COMMON_OPTS="-B -DforkCount=0 -Ddebug.piper.jni=true"
+
           # Specific check for macOS Intel on ARM runner
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "amd64" ]]; then
             echo "Running tests via Rosetta for x86_64"
-            arch -x86_64 mvn -B test
+            arch -x86_64 mvn $COMMON_OPTS test
           else
-            mvn -B test
+            mvn $COMMON_OPTS test
           fi
 
   deploy:
