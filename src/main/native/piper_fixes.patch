@@ -1,5 +1,5 @@
 diff --git a/libpiper/include/piper_impl.hpp b/libpiper/include/piper_impl.hpp
-index aa12a1d..9befcf7 100644
+index aa12a1d..186d297 100644
 --- a/libpiper/include/piper_impl.hpp
 +++ b/libpiper/include/piper_impl.hpp
 @@ -35,7 +35,7 @@ const float DEFAULT_NOISE_W_SCALE = 0.8f;
@@ -7,7 +7,7 @@ index aa12a1d..9befcf7 100644
 
  // onnx
 -Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
-+inline Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
++extern Ort::Env ort_env;
 
  // espeak
  #define CLAUSE_INTONATION_FULL_STOP 0x00000000
@@ -21,55 +21,15 @@ index aa12a1d..9befcf7 100644
      auto it = view.begin();
 
 diff --git a/libpiper/src/piper.cpp b/libpiper/src/piper.cpp
-index 774e87d..49e12f5 100644
+index 774e87d..208a71e 100644
 --- a/libpiper/src/piper.cpp
 +++ b/libpiper/src/piper.cpp
-@@ -5,6 +5,11 @@
- #include <fstream>
- #include <limits>
-
-+#ifdef _WIN32
-+#define NOMINMAX
-+#include <windows.h>
-+#endif
-+
- #include <espeak-ng/speak_lib.h>
+@@ -9,6 +9,8 @@
 
  using json = nlohmann::json;
-@@ -96,8 +101,16 @@
-     synth->session_options.DisableMemPattern();
-     synth->session_options.DisableProfiling();
 
-+#ifdef _WIN32
-+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, model_path, -1, NULL, 0);
-+    std::wstring model_path_w(size_needed, 0);
-+    MultiByteToWideChar(CP_UTF8, 0, model_path, -1, &model_path_w[0], size_needed);
-+    synth->session = std::make_unique<Ort::Session>(
-+        Ort::Session(ort_env, model_path_w.c_str(), synth->session_options));
-+#else
-     synth->session = std::make_unique<Ort::Session>(
-         Ort::Session(ort_env, model_path, synth->session_options));
-+#endif
-
-     return synth;
- }
-@@ -340,9 +353,17 @@
-                                                "scales", "sid"};
-
-     // Get all output names
--    std::vector<std::string> output_names_strs =
--        synth->session->GetOutputNames();
-+    size_t num_outputs = synth->session->GetOutputCount();
-+    std::vector<std::string> output_names_strs;
-+    output_names_strs.reserve(num_outputs);
-+    Ort::AllocatorWithDefaultOptions allocator;
-+    for (size_t i = 0; i < num_outputs; i++) {
-+        auto name = synth->session->GetOutputNameAllocated(i, allocator);
-+        output_names_strs.push_back(name.get());
-+    }
++Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
 +
-     std::vector<const char *> output_names;
-+    output_names.reserve(num_outputs);
-     for (const auto &name : output_names_strs) {
-         output_names.push_back(name.c_str());
-     }
+ struct piper_synthesizer *piper_create(const char *model_path,
+                                        const char *config_path,
+                                        const char *espeak_data_path) {

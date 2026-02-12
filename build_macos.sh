@@ -15,7 +15,7 @@ case "$AARCH" in
   *)
     echo Unsupported arch $AARCH
     ;;
-    
+
 esac
 
 TARGET=$AARCH-apple-macosx$TARGET_VERSION
