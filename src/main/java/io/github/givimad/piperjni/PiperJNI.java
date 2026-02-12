@@ -212,23 +212,26 @@ public class PiperJNI implements AutoCloseable {
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.contains("win")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
+                NativeUtils.loadLibraryResource("/win-amd64/onnxruntime_providers_shared.dll");
                 NativeUtils.loadLibraryResource("/win-amd64/onnxruntime.dll");
                 bundleLibraryPath = "/win-amd64/piper-jni.dll";
             }
         } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime.so.1.22.0");
+                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime_providers_shared.so");
+                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime.so");
                 bundleLibraryPath = "/debian-amd64/libpiper-jni.so";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so.1.22.0");
+                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime_providers_shared.so");
+                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so");
                 bundleLibraryPath = "/debian-arm64/libpiper-jni.so";
             }
         } else if (osName.contains("mac") || osName.contains("darwin")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryResource("/macos-amd64/libonnxruntime.1.22.0.dylib");
+                NativeUtils.loadLibraryResource("/macos-amd64/libonnxruntime.dylib");
                 bundleLibraryPath = "/macos-amd64/libpiper-jni.dylib";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryResource("/macos-arm64/libonnxruntime.1.22.0.dylib");
+                NativeUtils.loadLibraryResource("/macos-arm64/libonnxruntime.dylib");
                 bundleLibraryPath = "/macos-arm64/libpiper-jni.dylib";
             }
         }
