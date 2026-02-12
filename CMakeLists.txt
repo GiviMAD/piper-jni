@@ -40,8 +40,9 @@ set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
 set(ESPEAKNG_INSTALL_DIR ${CMAKE_BINARY_DIR}/espeak_ng-install)
 
 if(WIN32)
+    # Special handling for Windows
     set(ESPEAKNG_STATIC_LIB ${ESPEAKNG_INSTALL_DIR}/lib/espeak-ng.lib)
-    set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/ucd.lib)
+    set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/$<CONFIG>/ucd.lib)
 else()
     set(ESPEAKNG_STATIC_LIB ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a)
     set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a)
@@ -49,7 +50,7 @@ endif()
 
 ExternalProject_Add(espeak_ng_external
     GIT_REPOSITORY https://github.com/espeak-ng/espeak-ng.git
-    GIT_TAG 212928b394a96e8fd2096616bfd54e17845c48f6
+    GIT_TAG 212928b394a96e8fd2096616bfd54e17845c48f6  # 2025-Mar-22
     PREFIX ${ESPEAKNG_BUILD_DIR}
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${ESPEAKNG_INSTALL_DIR}
@@ -63,9 +64,13 @@ ExternalProject_Add(espeak_ng_external
         -DUSE_SPEECHPLAYER:BOOL=OFF
         -DEXTRA_cmn:BOOL=ON
         -DEXTRA_ru:BOOL=ON
+        # Need to explicitly add ucd include directory for CI
         "-DCMAKE_C_FLAGS=-D_FILE_OFFSET_BITS=64 -I${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external/src/ucd-tools/src/include"
         "-DCMAKE_CXX_FLAGS=-D_FILE_OFFSET_BITS=64 -I${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external/src/ucd-tools/src/include"
-    BUILD_BYPRODUCTS ${ESPEAKNG_STATIC_LIB} ${UCD_STATIC_LIB}
+    BUILD_BYPRODUCTS
+        ${ESPEAKNG_STATIC_LIB}
+        ${UCD_STATIC_LIB}
+    UPDATE_DISCONNECTED TRUE
 )
 
 # Dependency: ONNX Runtime
@@ -123,6 +128,7 @@ if(MSVC)
 elseif(NOT APPLE)
     # Linux flags
     string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Wl,-rpath,'$ORIGIN'")
+    string(APPEND CMAKE_C_FLAGS " -Wall -Wextra")
 endif()
 
 # Main Target
@@ -134,6 +140,9 @@ add_library(piper-jni SHARED
 add_dependencies(piper-jni espeak_ng_external)
 
 target_compile_definitions(piper-jni PUBLIC _PIPER_VERSION=${piper_version})
+if(WIN32)
+    target_compile_definitions(piper-jni PUBLIC ESPEAK_NG_STATIC LIBESPEAK_NG_EXPORT)
+endif()
 
 target_include_directories(piper-jni PUBLIC
     ${JNI_INCLUDE_DIRS}
@@ -150,6 +159,7 @@ target_link_libraries(piper-jni
     ${ESPEAKNG_STATIC_LIB}
     ${UCD_STATIC_LIB}
     onnxruntime
+    $<$<PLATFORM_ID:Windows>:User32.lib>
     $<$<NOT:$<PLATFORM_ID:Windows>>:pthread>
     $<$<NOT:$<PLATFORM_ID:Windows,Darwin>>:-static-libgcc -static-libstdc++>
 )
