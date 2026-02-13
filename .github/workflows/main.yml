@@ -216,12 +216,22 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      # Download the final JAR built in the build-maven job
-      - name: Download Maven JAR
-        uses: actions/download-artifact@v4
+      - name: Set up Cache
+        uses: actions/cache@v5
         with:
-          name: piper-jni
-          path: target/
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      # Download & Extract resources artifact
+      - uses: actions/download-artifact@v4
+        with:
+          name: piper-jni-resources
+          path: dist/
+      - name: Extract resources tarball
+        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+      # Deploy
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v4
         with:
