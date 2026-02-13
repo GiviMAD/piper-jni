@@ -9,59 +9,11 @@ extern "C" {
 #endif
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    newConfig
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_newConfig
-  (JNIEnv *, jobject);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    freeConfig
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_freeConfig
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    setESpeakDataPath
- * Signature: (ILjava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_setESpeakDataPath
-  (JNIEnv *, jobject, jint, jstring);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    setTashkeelModelPath
- * Signature: (ILjava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_setTashkeelModelPath
-  (JNIEnv *, jobject, jint, jstring);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    initializeConfig
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_initializeConfig
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    terminateConfig
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_io_github_givimad_piperjni_PiperJNI_terminateConfig
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
  * Method:    loadVoice
- * Signature: (ILjava/lang/String;Ljava/lang/String;JZ)I
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)I
  */
 JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_loadVoice
-  (JNIEnv *, jobject, jint, jstring, jstring, jlong, jboolean);
+  (JNIEnv *, jobject, jstring, jstring, jstring, jlong);
 
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI
@@ -81,14 +33,6 @@ JNIEXPORT jboolean JNICALL Java_io_github_givimad_piperjni_PiperJNI_voiceUsesESp
 
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI
- * Method:    voiceUsesTashkeelModel
- * Signature: (I)Z
- */
-JNIEXPORT jboolean JNICALL Java_io_github_givimad_piperjni_PiperJNI_voiceUsesTashkeelModel
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     io_github_givimad_piperjni_PiperJNI
  * Method:    voiceSampleRate
  * Signature: (I)I
  */
@@ -98,10 +42,10 @@ JNIEXPORT jint JNICALL Java_io_github_givimad_piperjni_PiperJNI_voiceSampleRate
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI
  * Method:    textToAudio
- * Signature: (IILjava/lang/String;Lio/github/givimad/piperjni/PiperJNI/AudioCallback;)[S
+ * Signature: (ILjava/lang/String;Lio/github/givimad/piperjni/PiperJNI/AudioCallback;)[S
  */
 JNIEXPORT jshortArray JNICALL Java_io_github_givimad_piperjni_PiperJNI_textToAudio
-  (JNIEnv *, jobject, jint, jint, jstring, jobject);
+  (JNIEnv *, jobject, jint, jstring, jobject);
 
 /*
  * Class:     io_github_givimad_piperjni_PiperJNI

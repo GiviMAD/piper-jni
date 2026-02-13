@@ -5,17 +5,17 @@ case "$AARCH" in
   x86_64|amd64)
     AARCH=x86_64
     AARCH_NAME=amd64
-    TARGET_VERSION=11
+    TARGET_VERSION=14
     ;;
   arm64|aarch64)
     AARCH=arm64
     AARCH_NAME=arm64
-    TARGET_VERSION=13
+    TARGET_VERSION=14
     ;;
   *)
     echo Unsupported arch $AARCH
     ;;
-    
+
 esac
 
 TARGET=$AARCH-apple-macosx$TARGET_VERSION
