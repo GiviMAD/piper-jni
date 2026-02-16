@@ -107,6 +107,7 @@ jobs:
 
   build-maven:
     name: Maven Build
+    if: startsWith(github.ref, 'refs/tags/') != true
     needs: build-lib
     runs-on: ubuntu-latest
     steps:
@@ -210,7 +211,7 @@ jobs:
   deploy:
     name: Deploy to Maven Central
     if: startsWith(github.ref, 'refs/tags/')
-    needs: build-maven
+    needs: build-lib
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -251,8 +252,8 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "PIPER_VERSION=$PIPER_VERSION" >> $GITHUB_OUTPUT
         env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_CENTRAL_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
       - name: Release
         uses: softprops/action-gh-release@v1
