@@ -1,4 +1,23 @@
 /*
+ * #%L
+ * piper-jni
+ * %%
+ * Copyright (C) 2023 - 2026 Contributors to whisper-jni
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+/*
  * Class NativeUtils is published under the The MIT License:
  *
  * Copyright (c) 2012 Adam Heinrich <adam@adamh.cz>
@@ -66,9 +85,6 @@ public class NativeUtils {
     /** Espeak data path in temporary directory. */
     private static Path espeakNGDir;
 
-    /** Espeak data path in temporary directory. */
-    private static Path tashkeelModelFile;
-
     /** Private constructor - this class will never be instanced */
     private NativeUtils() {}
 
@@ -124,14 +140,6 @@ public class NativeUtils {
             Files.delete(espeakNGZip);
         }
         return espeakNGDir.toAbsolutePath();
-    }
-
-    public static Path getTashkeelModel() throws IOException {
-        if (tashkeelModelFile == null || !Files.exists(tashkeelModelFile)) {
-            String modelName = "libtashkeel_model.ort";
-            tashkeelModelFile = NativeUtils.extractToTempDir("/" + modelName, modelName);
-        }
-        return tashkeelModelFile.toAbsolutePath();
     }
 
     public static void extractZipTo(Path archiveFile, Path destPath) throws IOException {

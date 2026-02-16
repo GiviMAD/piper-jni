@@ -1,3 +1,22 @@
+/*
+ * #%L
+ * piper-jni
+ * %%
+ * Copyright (C) 2023 - 2026 Contributors to whisper-jni
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
 package io.github.givimad.piperjni;
 
 import java.io.FileNotFoundException;
@@ -11,34 +30,21 @@ import io.github.givimad.piperjni.internal.NativeUtils;
 public class PiperJNI implements AutoCloseable {
 
     private static boolean libraryLoaded;
-    private PiperConfig currentConfig;
+    private String currentESpeakDataPath;
+    private boolean initialized;
 
     // region native api
-    protected native int newConfig();
-
-    protected native void freeConfig(int configRef);
-
-    protected native void setESpeakDataPath(int configRef, String eSpeakDataPath);
-
-    protected native void setTashkeelModelPath(int configRef, String tashkeelModelPath);
-
-    protected native void initializeConfig(int configRef) throws IOException;
-
-    protected native void terminateConfig(int configRef);
 
     protected native int loadVoice(
-            int configRef, String model, String modelConfig, long speakerId, boolean useCUDA);
+            String espeakDataPath, String model, String modelConfig, long speakerId);
 
     protected native void freeVoice(int voiceRef);
 
     protected native boolean voiceUsesESpeakPhonemes(int voiceRef);
 
-    protected native boolean voiceUsesTashkeelModel(int voiceRef);
-
     protected native int voiceSampleRate(int voiceRef);
 
-    private native short[] textToAudio(
-            int configRef, int voiceRef, String text, AudioCallback audioCallback)
+    private native short[] textToAudio(int voiceRef, String text, AudioCallback audioCallback)
             throws IOException;
 
     private native String getVersion();
@@ -70,40 +76,34 @@ public class PiperJNI implements AutoCloseable {
      * @throws IOException if initialization fails.
      */
     public void initialize() throws IOException {
-        initialize(true, false);
+        initialize(true);
     }
 
     /**
      * Initializes the piper instance configuration. Should be called before using the instance.
      *
      * @param useESpeakPhonemes Support voices with ESpeak phonemes.
-     * @param useTashkeelModel Support voices using the Tashkeel model.
      * @throws IOException if initialization fails.
      */
-    public void initialize(boolean useESpeakPhonemes, boolean useTashkeelModel) throws IOException {
+    public void initialize(boolean useESpeakPhonemes) throws IOException {
         assertRegistered();
-        terminate();
-        PiperConfig config = new PiperConfig(this);
         if (useESpeakPhonemes) {
-            config.setESpeakDataPath(NativeUtils.getESpeakNGData());
+            Path path = NativeUtils.getESpeakNGData();
+            if (path == null) {
+                this.currentESpeakDataPath = null;
+            } else {
+                this.currentESpeakDataPath = path.toAbsolutePath().toString();
+            }
         } else {
-            config.setESpeakDataPath(null);
+            this.currentESpeakDataPath = null;
         }
-        if (useTashkeelModel) {
-            config.setTashkeelModelPath(NativeUtils.getTashkeelModel());
-        } else {
-            config.setTashkeelModelPath(null);
-        }
-        initializeConfig(config.ref);
-        this.currentConfig = config;
+        this.initialized = true;
     }
 
     /** Unload current configuration if any. */
     public void terminate() {
-        if (isInitialized()) {
-            terminateConfig(currentConfig.ref);
-            this.currentConfig = null;
-        }
+        this.currentESpeakDataPath = null;
+        this.initialized = false;
     }
 
     /**
@@ -116,8 +116,8 @@ public class PiperJNI implements AutoCloseable {
      * @throws NotInitialized if piper was not initialized
      */
     public PiperVoice loadVoice(Path modelPath, Path modelConfigPath)
-            throws IOException, NotInitialized {
-        return loadVoice(modelPath, modelConfigPath, -1, false);
+            throws FileNotFoundException, NotInitialized {
+        return loadVoice(modelPath, modelConfigPath, -1);
     }
 
     /**
@@ -131,38 +131,6 @@ public class PiperJNI implements AutoCloseable {
      * @throws NotInitialized if piper was not initialized
      */
     public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, long speakerId)
-            throws IOException, NotInitialized {
-        return loadVoice(modelPath, modelConfigPath, speakerId, false);
-    }
-
-    /**
-     * Loads piper voice model and config.
-     *
-     * @param modelPath model file path
-     * @param modelConfigPath model config file path
-     * @param useCUDA Use CUDA
-     * @return a {@link PiperVoice} instance
-     * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized if piper was not initialized
-     */
-    public PiperVoice loadVoice(Path modelPath, Path modelConfigPath, boolean useCUDA)
-            throws IOException, NotInitialized {
-        return loadVoice(modelPath, modelConfigPath, -1, useCUDA);
-    }
-
-    /**
-     * Loads piper voice model and config.
-     *
-     * @param modelPath model file path
-     * @param modelConfigPath model config file path
-     * @param speakerId Speaker id or -1.
-     * @param useCUDA Use CUDA
-     * @return a {@link PiperVoice} instance
-     * @throws FileNotFoundException if models or config doesn't exist
-     * @throws NotInitialized if piper was not initialized
-     */
-    public PiperVoice loadVoice(
-            Path modelPath, Path modelConfigPath, long speakerId, boolean useCUDA)
             throws FileNotFoundException, NotInitialized {
         assertRegistered();
         assertInitialized();
@@ -174,7 +142,7 @@ public class PiperJNI implements AutoCloseable {
                 || Files.isDirectory(modelConfigPath)) {
             throw new FileNotFoundException("Model config file is required");
         }
-        return new PiperVoice(this, currentConfig, modelPath, modelConfigPath, speakerId, useCUDA);
+        return new PiperVoice(this, currentESpeakDataPath, modelPath, modelConfigPath, speakerId);
     }
 
     /**
@@ -218,7 +186,7 @@ public class PiperJNI implements AutoCloseable {
             // return empty.
             return new short[] {};
         }
-        return textToAudio(currentConfig.ref, voice.ref, text, audioCallback);
+        return textToAudio(voice.ref, text, audioCallback);
     }
 
     /**
@@ -227,7 +195,7 @@ public class PiperJNI implements AutoCloseable {
      * @return true if piper was initialized
      */
     public boolean isInitialized() {
-        return currentConfig != null && !currentConfig.isReleased();
+        return initialized;
     }
 
     /**
@@ -244,38 +212,26 @@ public class PiperJNI implements AutoCloseable {
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.contains("win")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
+                NativeUtils.loadLibraryResource("/win-amd64/onnxruntime_providers_shared.dll");
                 NativeUtils.loadLibraryResource("/win-amd64/onnxruntime.dll");
-                NativeUtils.loadLibraryResource("/win-amd64/espeak-ng.dll");
-                NativeUtils.loadLibraryResource("/win-amd64/piper_phonemize.dll");
                 bundleLibraryPath = "/win-amd64/piper-jni.dll";
             }
         } else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryResource("/debian-amd64/libespeak-ng.so.1");
-                NativeUtils.loadLibraryResource("/debian-amd64/libpiper_phonemize.so.1");
+                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime_providers_shared.so");
+                NativeUtils.loadLibraryResource("/debian-amd64/libonnxruntime.so");
                 bundleLibraryPath = "/debian-amd64/libpiper-jni.so";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryResource("/debian-arm64/libespeak-ng.so.1");
-                NativeUtils.loadLibraryResource("/debian-arm64/libpiper_phonemize.so.1");
+                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime_providers_shared.so");
+                NativeUtils.loadLibraryResource("/debian-arm64/libonnxruntime.so");
                 bundleLibraryPath = "/debian-arm64/libpiper-jni.so";
-            } else if (osArch.contains("armv7") || osArch.contains("arm")) {
-                NativeUtils.loadLibraryResource("/debian-armv7l/libonnxruntime.so.1.14.1");
-                NativeUtils.loadLibraryResource("/debian-armv7l/libespeak-ng.so.1");
-                NativeUtils.loadLibraryResource("/debian-armv7l/libpiper_phonemize.so.1");
-                bundleLibraryPath = "/debian-armv7l/libpiper-jni.so";
             }
         } else if (osName.contains("mac") || osName.contains("darwin")) {
             if (osArch.contains("amd64") || osArch.contains("x86_64")) {
-                NativeUtils.loadLibraryResource("/macos-amd64/libonnxruntime.1.14.1.dylib");
-                NativeUtils.loadLibraryResource("/macos-amd64/libespeak-ng.1.dylib");
-                NativeUtils.loadLibraryResource("/macos-amd64/libpiper_phonemize.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-amd64/libonnxruntime.dylib");
                 bundleLibraryPath = "/macos-amd64/libpiper-jni.dylib";
             } else if (osArch.contains("aarch64") || osArch.contains("arm64")) {
-                NativeUtils.loadLibraryResource("/macos-arm64/libonnxruntime.1.14.1.dylib");
-                NativeUtils.loadLibraryResource("/macos-arm64/libespeak-ng.1.dylib");
-                NativeUtils.loadLibraryResource("/macos-arm64/libpiper_phonemize.1.dylib");
+                NativeUtils.loadLibraryResource("/macos-arm64/libonnxruntime.dylib");
                 bundleLibraryPath = "/macos-arm64/libpiper-jni.dylib";
             }
         }

@@ -1,3 +1,22 @@
+/*
+ * #%L
+ * piper-jni
+ * %%
+ * Copyright (C) 2023 - 2026 Contributors to whisper-jni
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
 package io.github.givimad.piperjni;
 
 import java.io.ByteArrayInputStream;
@@ -14,6 +33,7 @@ import javax.naming.ConfigurationException;
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -47,7 +67,7 @@ public class PiperJNITest {
     @Test
     public void initializePiper() throws IOException {
         try {
-            piper.initialize(true, false);
+            piper.initialize(true);
         } finally {
             piper.terminate();
         }
@@ -75,8 +95,7 @@ public class PiperJNITest {
     }
 
     @Test
-    public void createAudioData()
-            throws IOException, ConfigurationException, PiperJNI.NotInitialized {
+    public void createAudioData() throws IOException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
@@ -90,13 +109,15 @@ public class PiperJNITest {
             textToSpeak = DEFAULT_TEXT_TO_SPEAK;
         }
         try {
-            piper.initialize(true, true);
+            piper.initialize(true);
             try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
                 short[] samples = piper.textToAudio(voice, textToSpeak);
                 assertNotEquals(0, samples.length);
-                createWAVFile(List.of(samples), sampleRate, Path.of(TEST_DIR, "test.wav"));
+                Path outPath = Path.of(TEST_DIR, "test.wav");
+                createWAVFile(List.of(samples), sampleRate, outPath);
+                verifyAudioFile(outPath);
             }
         } finally {
             piper.terminate();
@@ -104,8 +125,7 @@ public class PiperJNITest {
     }
 
     @Test
-    public void streamAudioData()
-            throws ConfigurationException, IOException, PiperJNI.NotInitialized {
+    public void streamAudioData() throws IOException, PiperJNI.NotInitialized {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
@@ -119,7 +139,7 @@ public class PiperJNITest {
             textToSpeak = DEFAULT_TEXT_TO_SPEAK;
         }
         try {
-            piper.initialize(true, false);
+            piper.initialize(true);
             try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig))) {
                 assertNotNull(voice);
                 int sampleRate = voice.getSampleRate();
@@ -129,7 +149,7 @@ public class PiperJNITest {
                 assertNotEquals(0, audioSamplesChunks.get(0).length);
                 Path outPath = Path.of(TEST_DIR, "test-stream.wav");
                 createWAVFile(audioSamplesChunks, sampleRate, outPath);
-                assertTrue(Files.exists(outPath));
+                verifyAudioFile(outPath);
             }
         } finally {
             piper.terminate();
@@ -165,6 +185,24 @@ public class PiperJNITest {
             audioFileOutputStream.close();
         } catch (IOException e) {
             System.err.println("Unable to store sample: " + e.getMessage());
+        }
+    }
+
+    private void verifyAudioFile(Path path) throws IOException {
+        assertTrue(Files.exists(path), "Audio file should exist");
+        try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(path.toFile())) {
+            assertNotEquals(0, audioInputStream.getFrameLength(), "Audio file should have frames");
+            byte[] bytes = audioInputStream.readAllBytes();
+            boolean hasAudio = false;
+            for (byte b : bytes) {
+                if (b != 0) {
+                    hasAudio = true;
+                    break;
+                }
+            }
+            assertTrue(hasAudio, "Audio file should contain non-silent audio data");
+        } catch (UnsupportedAudioFileException e) {
+            throw new IOException("Unsupported audio file format", e);
         }
     }
 }

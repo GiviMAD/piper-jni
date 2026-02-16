@@ -1,19 +1,20 @@
 # PiperJNI
 
-A JNI wrapper for [piper](https://github.com/rhasspy/piper), a fast, local neural text to speech system.
+A JNI wrapper for [Piper](https://github.com/OHF-Voice/piper1-gpl), a fast, local neural text to speech system.
 
 ## Platform Support
 
 This library aims to support the following platforms:
 
 * Windows x86_64
-* Linux x86_64/arm64/armv7l (built with Ubuntu Focal Fossa, GLIBC version 2.31)
-* macOS x86_64/arm64 (built with macOS 13 Ventura for x86_64 and macOS 14 Sonoma for arm64)
+* Linux x86_64/arm64 (built with Ubuntu Focal Fossa, GLIBC version 2.31)
+* macOS x86_64/arm64 (built for macOS 14 Sonoma and newer)
 
-The JAR includes the piper-jni native library, which contains the piper source, and the shared libraries it depends on:
-[espeak](https://espeak.sourceforge.net), [piper-phonetize](https://github.com/rhasspy/piper-phonemize) and [onxxruntime](https://onnxruntime.ai).
+The JAR includes the piper-jni native library, which contains the [Piper](https://github.com/OHF-Voice/piper1-gpl) source,
+and the shared libraries it depends on:
+[espeak](https://espeak.sourceforge.net), [piper-phonemize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
 
-## Installation
+## Usage
 
 The package is distributed through [Maven Central](https://central.sonatype.com/artifact/io.github.givimad/piper-jni):
 
@@ -43,35 +44,23 @@ dependencies {
 
 You can also find the package's jar attached to each [release](https://github.com/GiviMAD/piper-jni/releases).
 
-## Examples
+### Examples
 
 ```java
-String voiceModel = System.getenv("VOICE_MODEL");
-String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
-String textToSpeak = System.getenv("TEXT_TO_SPEAK");
-if (voiceModel == null || voiceModel.isBlank()) {
-    throw new ConfigurationException("env var VOICE_MODEL is required");
-}
-if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
-    throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
-}
-if (textToSpeak == null || textToSpeak.isBlank()) {
-    throw new ConfigurationException("env var TEXT_TO_SPEAK is required");
-}
 PiperJNI piper = new PiperJNI();
-piper.initialize(true, true);
-try (var voice = piper.loadVoice(Paths.get(voiceModel), Path.of(voiceModelConfig), 0)) {     
+piper.initialize(true);
+try (var voice = piper.loadVoice(Paths.get("/path/to/en_US-lessac-medium.onnx"), Path.of("/path/to/en_US-lessac-medium.onnx.json"), 0)) {
     int sampleRate = voice.getSampleRate();
     short[] samples = piper.textToAudio(voice, textToSpeak);
-    createWAVFile(List.of(samples), sampleRate, Path.of("test.wav"));
+    // Do something with the samples...
 } finally {
     piper.terminate(config);
 }
 ```
 
-## Building / Testing
+## Development
 
-You need to have Java 17 and C++ setup.
+You need to have Java >= 11 and C++ setup.
 
 After cloning the project, you need to init the piper submodule by running:
 
@@ -132,7 +121,7 @@ Finally, you can build the Java project:
 mvn package
 ```
 
-## Extending the Native API
+### Extending the Native API
 
 If you want to add any missing piper functionality, you need to:
 

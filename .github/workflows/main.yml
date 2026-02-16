@@ -4,111 +4,100 @@ on:
     branches: [ main ]
     tags: [ "v*.*.*", "v*.*.*-*" ]
   pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
+env:
+  JAVA_VERSION: 17
+  JAVA_DISTRO: temurin
+
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          # Define your matrix as a JSON object
+          MATRIX_JSON='{
+            "include": [
+              {"os": "ubuntu-24.04", "arch": "x86_64", "platform": "linux/amd64", "artifact_name": "debian-binary-amd64"},
+              {"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64", "artifact_name": "debian-binary-arm64"},
+              {"os": "macos-14", "arch": "amd64", "artifact_name": "macos-binary-amd64"},
+              {"os": "macos-14", "arch": "arm64", "artifact_name": "macos-binary-arm64"},
+              {"os": "windows-latest", "arch": "x86_64", "artifact_name": "windows-binary-x86_64"}
+            ]
+          }'
+          echo "matrix=$(echo $MATRIX_JSON | jq -c .)" >> $GITHUB_OUTPUT
+
   build-lib:
-    name: Build Library ${{ matrix.artifact_name }}
+    name: Build Library (${{ matrix.artifact_name }})
+    needs: setup-matrix
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # Linux x86_64
-          - os: ubuntu-latest
-            arch: x86_64
-            platform: linux/amd64
-            artifact_name: debian-binary-amd64
-            path_suffix: debian-amd64
-          # Linux arm64
-          - os: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux/arm64
-            artifact_name: debian-binary-arm64
-            path_suffix: debian-arm64
-          # Linux armv7l (using QEMU)
-          - os: ubuntu-latest
-            arch: armv7l
-            platform: linux/arm/v7
-            artifact_name: debian-binary-armv7l
-            path_suffix: debian-armv7l
-          # macOS Intel
-          - os: macos-14
-            arch: amd64
-            artifact_name: macos-binary-amd64
-          # macOS Apple Silicon
-          - os: macos-14
-            arch: arm64
-            artifact_name: macos-binary-arm64
-          # Windows x86_64
-          - os: windows-latest
-            arch: x86_64
-            artifact_name: windows-binary-x86_64
-
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     steps:
+      # --- Checkout and Setup ---
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-
+      - name: Setup Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      # Only need QEMU if we are on x86 building for ARM (unlikely with this setup)
-      # or if the ARM64 runner needs extra help with v7 instructions.
-      - name: Set up QEMU
-        if: runner.os == 'Linux' && matrix.arch == 'armv7l'
-        uses: docker/setup-qemu-action@v3
-
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+      # --- Linux Build Logic ---
       - name: Docker Setup Buildx
         if: runner.os == 'Linux'
         uses: docker/setup-buildx-action@v3
-
-      # --- Linux Build Logic (Handles x86_64, arm64, and armv7l) ---
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p dist
           docker buildx build \
             --platform ${{ matrix.platform }} \
             --target export \
             --output type=local,dest=dist \
             .
-
-      # --- macOS & Windows Logic remains same as previous ---
+      # --- macOS Build Logic ---
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
-          mkdir -p dist
+          mkdir -p dist/lib
           if [ "${{ matrix.arch }}" = "amd64" ]; then
             arch -x86_64 ./build_macos.sh x86_64
           else
             ./build_macos.sh ${{ matrix.arch }}
           fi
-          mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/
-
+          mv src/main/resources/macos-${{ matrix.arch }}/*.dylib dist/lib
+          tar -cvf dist/piper-jni-libs.tar -C dist/lib .
+      # --- Windows Build Logic ---
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
+          $ErrorActionPreference = 'Stop' # Forces exit on error
           cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src\main\resources\win-amd64
           cmake --build build --config Release
           cmake --install build
           if (!(Test-Path dist)) { mkdir dist }
-          move-item src\main\resources\win-amd64\*.dll .\dist\
-
+          if (!(Test-Path dist\lib)) { mkdir dist\lib }
+          move-item src\main\resources\win-amd64\*.dll .\dist\lib\
+          tar -cvf dist\piper-jni-libs.tar -C dist\lib .
+      # --- Upload Artifacts ---
       - name: Upload Library
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: |
-            dist/*.so*
-            dist/*.dylib
-            dist/*.dll
-
+          path: dist/piper-jni-libs.tar
       - name: Upload eSpeak data
         if: matrix.arch == 'x86_64' && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
@@ -116,82 +105,133 @@ jobs:
           name: espeak-ng-data
           path: dist/*.zip
 
-      - name: Upload Tashkeel model
-        if: matrix.arch == 'x86_64' && runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tashkeel-model
-          path: dist/*.ort
-
   build-maven:
     name: Maven Build
-    if: startsWith(github.ref, 'refs/tags/') != true
     needs: build-lib
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
       - uses: actions/download-artifact@v4
-      - name: Check artifact tree
-        run: ls -R
       - name: Setup resources
         run: |
-          mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
-          mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
-          mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
-          mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
-          mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
-          mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
-          mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
-          mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
-          mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
-          mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
-          mv ./tashkeel-model/*.ort ./src/main/resources/
+          tar -xvf ./debian-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
+          tar -xvf ./debian-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/debian-arm64/
+          tar -xvf ./macos-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/macos-amd64/
+          tar -xvf ./macos-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/macos-arm64/
+          tar -xvf ./windows-binary-x86_64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
+      - name: Bundle resources as tarball
+        run: |
+          mkdir -p dist
+          tar -cvf dist/resources.tar -C ./src/main/resources/ .
+      - name: Upload resources tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: piper-jni-resources
+          path: dist/resources.tar
       - name: Build with Maven
-        run: mvn -B package -DskipTests
-      - name: Upload JAR
+        run: mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
+      - name: Bundle JAR as tarball
+        run: |
+          mkdir -p dist/target
+          cp target/piper-jni-*.jar dist/target/
+          rm dist/target/piper-jni-*-sources.jar
+          tar -cvf dist/jar.tar -C dist/target/ .
+      - name: Upload JAR tarball
         uses: actions/upload-artifact@v4
         with:
           name: piper-jni
-          path: |
-            target/piper-jni-*.jar
+          path: dist/jar.tar
       - name: Download models for tests
         run: ./download_test_model.sh
       - name: Run tests
         run: mvn -B test
 
+  test-maven:
+    name: Maven Test (${{ matrix.artifact_name }})
+    needs: [setup-matrix, build-maven]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: piper-jni-resources
+          path: dist/
+      - name: Extract resources tarball
+        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+      - name: Download model
+        shell: bash
+        run: ./download_test_model.sh
+      - name: Run Maven Tests
+        shell: bash
+        run: |
+          # Use -DforkCount=0 to run tests in the same process as Maven.
+          # This avoids the "Abort trap 6" caused by the fork losing library context.
+          # Also explicitly set the native library path just in case.
+          COMMON_OPTS="-B -DforkCount=0 -Ddebug.piper.jni=true"
+
+          # Specific check for macOS Intel on ARM runner
+          if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "amd64" ]]; then
+            echo "Running tests via Rosetta for x86_64"
+            arch -x86_64 mvn $COMMON_OPTS test
+          else
+            mvn $COMMON_OPTS test
+          fi
+
   deploy:
     name: Deploy to Maven Central
     if: startsWith(github.ref, 'refs/tags/')
-    needs: build-lib
+    needs: build-maven
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      # Download & Extract resources artifact
       - uses: actions/download-artifact@v4
-      - name: Check artifact tree
-        run: ls -R
-      - name: Setup resources
-        run: |
-          mv ./debian-binary-amd64/*.so.* ./src/main/resources/debian-amd64/
-          mv ./debian-binary-amd64/libpiper-jni.so ./src/main/resources/debian-amd64/
-          mv ./debian-binary-arm64/*.so.* ./src/main/resources/debian-arm64/
-          mv ./debian-binary-arm64/libpiper-jni.so ./src/main/resources/debian-arm64/
-          mv ./debian-binary-armv7l/*.so.* ./src/main/resources/debian-armv7l/
-          mv ./debian-binary-armv7l/libpiper-jni.so ./src/main/resources/debian-armv7l/
-          mv ./windows-binary-x86_64/*.dll ./src/main/resources/win-amd64/
-          mv ./macos-binary-amd64/libonnxruntime.*.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-amd64/*.1.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-amd64/libpiper-jni.dylib ./src/main/resources/macos-amd64/
-          mv ./macos-binary-arm64/libonnxruntime.*.dylib ./src/main/resources/macos-arm64/
-          mv ./macos-binary-arm64/*.1.dylib ./src/main/resources/macos-arm64/
-          mv ./macos-binary-arm64/libpiper-jni.dylib ./src/main/resources/macos-arm64/
-          mv ./tashkeel-model/*.ort ./src/main/resources/
-          mv ./espeak-ng-data/*.zip ./src/main/resources/
+        with:
+          name: piper-jni-resources
+          path: dist/
+      - name: Extract resources tarball
+        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+      # Deploy
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v4
         with:
