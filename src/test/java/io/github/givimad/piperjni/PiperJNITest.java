@@ -44,12 +44,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class PiperJNITest {
-    private static final String TEST_DIR = "test-data";
-    private static final String DEFAULT_TEST_MODEL =
-            Path.of(TEST_DIR, "es_ES-sharvard-medium.onnx").toString();
-    private static final String DEFAULT_TEST_MODEL_CONFIG = DEFAULT_TEST_MODEL + ".json";
-    private static final String DEFAULT_TEXT_TO_SPEAK = "Buenos días";
-
     private static PiperJNI piper;
 
     @BeforeAll
@@ -79,10 +73,10 @@ public class PiperJNITest {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         if (voiceModel == null || voiceModel.isBlank()) {
-            voiceModel = DEFAULT_TEST_MODEL;
+            throw new ConfigurationException("env var VOICE_MODEL is required");
         }
         if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
-            voiceModelConfig = DEFAULT_TEST_MODEL_CONFIG;
+            throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
         try {
             piper.initialize();
@@ -95,18 +89,23 @@ public class PiperJNITest {
     }
 
     @Test
-    public void createAudioData() throws IOException, PiperJNI.NotInitialized {
+    public void createAudioData()
+            throws IOException, PiperJNI.NotInitialized, ConfigurationException {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
+        String outputDir = System.getenv("OUTPUT_DIR");
         if (voiceModel == null || voiceModel.isBlank()) {
-            voiceModel = DEFAULT_TEST_MODEL;
+            throw new ConfigurationException("env var VOICE_MODEL is required");
         }
         if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
-            voiceModelConfig = DEFAULT_TEST_MODEL_CONFIG;
+            throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
         if (textToSpeak == null || textToSpeak.isBlank()) {
-            textToSpeak = DEFAULT_TEXT_TO_SPEAK;
+            throw new ConfigurationException("env var TEXT_TO_SPEAK is required");
+        }
+        if (outputDir == null || outputDir.isBlank()) {
+            throw new ConfigurationException("env var OUTPUT_DIR is required");
         }
         try {
             piper.initialize(true);
@@ -115,7 +114,7 @@ public class PiperJNITest {
                 int sampleRate = voice.getSampleRate();
                 short[] samples = piper.textToAudio(voice, textToSpeak);
                 assertNotEquals(0, samples.length);
-                Path outPath = Path.of(TEST_DIR, "test.wav");
+                Path outPath = Path.of(outputDir, "test.wav");
                 createWAVFile(List.of(samples), sampleRate, outPath);
                 verifyAudioFile(outPath);
             }
@@ -125,18 +124,23 @@ public class PiperJNITest {
     }
 
     @Test
-    public void streamAudioData() throws IOException, PiperJNI.NotInitialized {
+    public void streamAudioData()
+            throws IOException, PiperJNI.NotInitialized, ConfigurationException {
         String voiceModel = System.getenv("VOICE_MODEL");
         String voiceModelConfig = System.getenv("VOICE_MODEL_CONFIG");
         String textToSpeak = System.getenv("TEXT_TO_SPEAK");
+        String outputDir = System.getenv("OUTPUT_DIR");
         if (voiceModel == null || voiceModel.isBlank()) {
-            voiceModel = DEFAULT_TEST_MODEL;
+            throw new ConfigurationException("env var VOICE_MODEL is required");
         }
         if (voiceModelConfig == null || voiceModelConfig.isBlank()) {
-            voiceModelConfig = DEFAULT_TEST_MODEL_CONFIG;
+            throw new ConfigurationException("env var VOICE_MODEL_CONFIG is required");
         }
         if (textToSpeak == null || textToSpeak.isBlank()) {
-            textToSpeak = DEFAULT_TEXT_TO_SPEAK;
+            throw new ConfigurationException("env var TEXT_TO_SPEAK is required");
+        }
+        if (outputDir == null || outputDir.isBlank()) {
+            throw new ConfigurationException("env var OUTPUT_DIR is required");
         }
         try {
             piper.initialize(true);
@@ -147,7 +151,7 @@ public class PiperJNITest {
                 piper.textToAudio(voice, textToSpeak, audioSamplesChunks::add);
                 assertFalse(audioSamplesChunks.isEmpty());
                 assertNotEquals(0, audioSamplesChunks.get(0).length);
-                Path outPath = Path.of(TEST_DIR, "test-stream.wav");
+                Path outPath = Path.of(outputDir, "test-stream.wav");
                 createWAVFile(audioSamplesChunks, sampleRate, outPath);
                 verifyAudioFile(outPath);
             }

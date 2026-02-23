@@ -155,8 +155,6 @@ jobs:
         with:
           name: piper-jni
           path: dist/jar.tar
-      - name: Download models for tests
-        run: ./download_test_model.sh
       - name: Run tests
         run: mvn -B test
 
@@ -188,9 +186,6 @@ jobs:
           path: dist/
       - name: Extract resources tarball
         run: tar -xvf dist/resources.tar -C ./src/main/resources/
-      - name: Download model
-        shell: bash
-        run: ./download_test_model.sh
       - name: Run Maven Tests
         shell: bash
         run: |

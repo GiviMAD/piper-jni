@@ -52,6 +52,12 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- test configuration: -->
+    <test.resources.dir>${project.build.directory}/test-resources</test.resources.dir>
+    <test.output.dir>${project.build.directory}/test-output</test.output.dir>
+    <test.model.name>es_ES-sharvard-medium.onnx</test.model.name>
+    <test.model.url>https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/sharvard/medium</test.model.url>
+    <test.text>Buenos días</test.text>
   </properties>
 
   <dependencies>
@@ -71,17 +77,44 @@
 
   <build>
     <plugins>
+      <!-- Antrun Plugin to download model for tests & create/clear test output dir -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-clean-plugin</artifactId>
-        <version>3.5.0</version>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>download-test-data</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>generate-test-resources</phase>
+            <configuration>
+              <target>
+                <mkdir dir="${test.resources.dir}"/>
+                <get dest="${test.resources.dir}/${test.model.name}" skipexisting="true" src="${test.model.url}/${test.model.name}"/>
+                <get dest="${test.resources.dir}/${test.model.name}.json" skipexisting="true" src="${test.model.url}/${test.model.name}.json"/>
+                <delete dir="${test.output.dir}"/>
+                <mkdir dir="${test.output.dir}"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Surefire Plugin to configure env for tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.5</version>
         <configuration>
-          <filesets>
-            <fileset>
-              <directory>test-data</directory>
-              <followSymlinks>false</followSymlinks>
-            </fileset>
-          </filesets>
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
+          <environmentVariables>
+            <VOICE_MODEL>${test.resources.dir}/${test.model.name}</VOICE_MODEL>
+            <VOICE_MODEL_CONFIG>${test.resources.dir}/${test.model.name}.json</VOICE_MODEL_CONFIG>
+            <TEXT_TO_SPEAK>${test.text}</TEXT_TO_SPEAK>
+            <OUTPUT_DIR>${test.output.dir}</OUTPUT_DIR>
+          </environmentVariables>
         </configuration>
       </plugin>
       <!-- Source Plugin to attach sources as JAR -->
