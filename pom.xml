@@ -107,6 +107,8 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.5</version>
         <configuration>
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
           <environmentVariables>
             <VOICE_MODEL>${test.resources.dir}/${test.model.name}</VOICE_MODEL>
             <VOICE_MODEL_CONFIG>${test.resources.dir}/${test.model.name}.json</VOICE_MODEL_CONFIG>
