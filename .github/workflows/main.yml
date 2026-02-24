@@ -253,12 +253,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         id: create_release
         with:
-          tag_name: piper_jni_${{ steps.deploy.outputs.VERSION }}
-          name: piperJNI v${{ steps.deploy.outputs.VERSION }}
+          name: Piper JNI v${{ steps.deploy.outputs.VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true
-          body: A JNI wrapper for piper v${{ steps.deploy.outputs.PIPER_VERSION }}
+          body: A JNI wrapper for Piper v${{ steps.deploy.outputs.PIPER_VERSION }}
           files: |
             target/piper-jni-${{ steps.deploy.outputs.VERSION }}.jar
         env:
