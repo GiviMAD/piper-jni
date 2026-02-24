@@ -206,6 +206,7 @@ jobs:
     name: Deploy to Maven Central
     if: github.repository == 'jvoice-project/piper-jni' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: [build-maven, test-maven]
+    environment: central-deploy
     runs-on: ubuntu-latest
     permissions:
       contents: write
