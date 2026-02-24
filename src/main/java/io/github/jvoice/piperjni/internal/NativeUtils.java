@@ -55,7 +55,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -131,6 +130,12 @@ public class NativeUtils {
         }
     }
 
+    /**
+     * Get the eSpeak NG data directory path and extract eSpeak NG data if not already extracted.
+     *
+     * @return eSpeak NG data directory path
+     * @throws IOException when an IO operation such as ZIP extraction fails
+     */
     public static Path getESpeakNGData() throws IOException {
         if (espeakNGDir == null || !Files.exists(espeakNGDir)) {
             String zipName = "espeak-ng-data.zip";
@@ -143,14 +148,19 @@ public class NativeUtils {
         return espeakNGDir.toAbsolutePath();
     }
 
+    /**
+     * Extract a ZIP archive to a given destination path.
+     *
+     * @param archiveFile path to the ZIP archive
+     * @param destPath destination to extract to
+     * @throws IOException when ZIP extraction fails or file operations fail
+     */
     public static void extractZipTo(Path archiveFile, Path destPath) throws IOException {
         Files.createDirectories(destPath); // create dest path folder(s)
         try (ZipFile archive = new ZipFile(archiveFile.toFile())) {
             // sort entries by name to always create folders first
             List<? extends ZipEntry> entries =
-                    archive.stream()
-                            .sorted(Comparator.comparing(ZipEntry::getName))
-                            .collect(Collectors.toList());
+                    archive.stream().sorted(Comparator.comparing(ZipEntry::getName)).toList();
             // copy each entry in the dest path
             for (ZipEntry entry : entries) {
                 Path entryDest = destPath.resolve(entry.getName());

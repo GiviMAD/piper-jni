@@ -30,13 +30,21 @@ public class PiperVoice extends PiperJNI.JNIRef {
 
     private final PiperJNI piper;
 
+    /**
+     * Creates a new voice instance.
+     *
+     * @param piper the PiperJNI instance
+     * @param espeakDataPath the eSpeak NG data directory path
+     * @param modelPath the voice model path
+     * @param modelConfigPath the voice model config path
+     * @param speakerId the speaker id
+     */
     protected PiperVoice(
             PiperJNI piper,
             String espeakDataPath,
             Path modelPath,
             Path modelConfigPath,
-            long speakerId)
-            throws IllegalArgumentException {
+            long speakerId) {
         super(
                 piper.loadVoice(
                         espeakDataPath,
@@ -46,6 +54,11 @@ public class PiperVoice extends PiperJNI.JNIRef {
         this.piper = piper;
     }
 
+    /**
+     * Whether the voice uses eSpeak phonemes.
+     *
+     * @return true if the voice uses eSpeak phonemes, false otherwise
+     */
     public boolean getUsesESpeakPhonemes() {
         assertAvailable();
         return piper.voiceUsesESpeakPhonemes(this.ref);
@@ -54,7 +67,7 @@ public class PiperVoice extends PiperJNI.JNIRef {
     /**
      * Get the generated audio sample rate.
      *
-     * @return the audio sample rate for these voice
+     * @return the audio sample rate for this voice
      */
     public int getSampleRate() {
         assertAvailable();
