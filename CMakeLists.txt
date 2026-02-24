@@ -133,7 +133,7 @@ endif()
 
 # Main Target
 add_library(piper-jni SHARED
-    src/main/native/io_github_jvoice_piperjni_PiperJNI.cpp
+    src/main/native/io_github_jvoiceproject_piperjni_PiperJNI.cpp
     ${PIPER_SRC_DIR}/libpiper/src/piper.cpp
 )
 

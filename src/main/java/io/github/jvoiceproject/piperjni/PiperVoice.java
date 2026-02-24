@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.github.jvoice.piperjni;
+package io.github.jvoiceproject.piperjni;
 
 import java.nio.file.Path;
 

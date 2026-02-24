@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.github.jvoice.piperjni.internal;
+package io.github.jvoiceproject.piperjni.internal;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -179,7 +179,7 @@ public class NativeUtils {
             temporaryDir = createTempDirectory(NATIVE_FOLDER_PATH_PREFIX);
             temporaryDir.toFile().deleteOnExit();
         }
-        String altDir = System.getProperty("io.github.givimad.piperjni.libdir");
+        String altDir = System.getProperty("io.github.jvoiceproject.piperjni.libdir");
         InputStream is;
         if (altDir != null) {
             String relativePath = path.substring(1);
