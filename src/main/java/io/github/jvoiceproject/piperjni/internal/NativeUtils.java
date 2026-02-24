@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.github.jvoice.piperjni.internal;
+package io.github.jvoiceproject.piperjni.internal;
 
 import java.io.File;
 import java.io.FileNotFoundException;

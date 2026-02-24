@@ -17,14 +17,14 @@
  * limitations under the License.
  * #L%
  */
-package io.github.jvoice.piperjni;
+package io.github.jvoiceproject.piperjni;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.jvoice.piperjni.internal.NativeUtils;
+import io.github.jvoiceproject.piperjni.internal.NativeUtils;
 
 /**
  * Piper JNI

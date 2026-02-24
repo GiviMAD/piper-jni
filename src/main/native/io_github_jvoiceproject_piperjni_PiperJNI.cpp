@@ -2,7 +2,7 @@
 #include "condition_variable"
 #include "atomic"
 #include "thread"
-#include "io_github_jvoice_piperjni_PiperJNI.h"
+#include "io_github_jvoiceproject_piperjni_PiperJNI.h"
 #include "piper.h"
 #include "piper_impl.hpp"
 
@@ -131,7 +131,7 @@ void jCallbackOutputProc(JavaVM *jvm, const jobject &jAudioCallback, std::vector
 
 // JNI Implementations
 
-JNIEXPORT jint JNICALL Java_io_github_jvoice_piperjni_PiperJNI_loadVoice(JNIEnv *env, jobject /*thisObject*/, jstring espeakDataPath, jstring modelPath, jstring modelConfigPath, jlong jSpeakerId) {
+JNIEXPORT jint JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_loadVoice(JNIEnv *env, jobject /*thisObject*/, jstring espeakDataPath, jstring modelPath, jstring modelConfigPath, jlong jSpeakerId) {
     try {
         JNIString cEspeakDataPath(env, espeakDataPath);
         JNIString cModelPath(env, modelPath);
@@ -159,7 +159,7 @@ JNIEXPORT jint JNICALL Java_io_github_jvoice_piperjni_PiperJNI_loadVoice(JNIEnv 
     }
 }
 
-JNIEXPORT jboolean JNICALL Java_io_github_jvoice_piperjni_PiperJNI_voiceUsesESpeakPhonemes(JNIEnv *env, jobject /*thisObject*/, jint voiceRef) {
+JNIEXPORT jboolean JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_voiceUsesESpeakPhonemes(JNIEnv *env, jobject /*thisObject*/, jint voiceRef) {
     try {
         std::lock_guard<std::mutex> lock(voiceMapMutex);
         PiperVoicePtr voice = voiceMap.at(voiceRef);
@@ -170,7 +170,7 @@ JNIEXPORT jboolean JNICALL Java_io_github_jvoice_piperjni_PiperJNI_voiceUsesESpe
     }
 }
 
-JNIEXPORT jint JNICALL Java_io_github_jvoice_piperjni_PiperJNI_voiceSampleRate(JNIEnv *env, jobject /*thisObject*/, jint voiceRef) {
+JNIEXPORT jint JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_voiceSampleRate(JNIEnv *env, jobject /*thisObject*/, jint voiceRef) {
     try {
         std::lock_guard<std::mutex> lock(voiceMapMutex);
         return (jint) voiceMap.at(voiceRef)->sample_rate;
@@ -180,14 +180,14 @@ JNIEXPORT jint JNICALL Java_io_github_jvoice_piperjni_PiperJNI_voiceSampleRate(J
     }
 }
 
-JNIEXPORT void JNICALL Java_io_github_jvoice_piperjni_PiperJNI_freeVoice(JNIEnv */*env*/, jobject /*thisObject*/, jint voiceRef) {
+JNIEXPORT void JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_freeVoice(JNIEnv */*env*/, jobject /*thisObject*/, jint voiceRef) {
     std::lock_guard<std::mutex> lock(voiceMapMutex);
     voiceMap.erase(voiceRef);
     // PiperDeleter will automatically call piper_free when the shared_ptr is destroyed
     // and no other references exist (e.g. from running textToAudio calls).
 }
 
-JNIEXPORT jshortArray JNICALL Java_io_github_jvoice_piperjni_PiperJNI_textToAudio(JNIEnv *env, jobject /*thisObject*/, jint voiceRef, jstring jText, jobject jAudioCallback) {
+JNIEXPORT jshortArray JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_textToAudio(JNIEnv *env, jobject /*thisObject*/, jint voiceRef, jstring jText, jobject jAudioCallback) {
     try {
         PiperVoicePtr voice;
         {
@@ -291,6 +291,6 @@ JNIEXPORT jshortArray JNICALL Java_io_github_jvoice_piperjni_PiperJNI_textToAudi
     }
 }
 
-JNIEXPORT jstring JNICALL Java_io_github_jvoice_piperjni_PiperJNI_getVersion(JNIEnv *env, jobject /*thisObject*/) {
+JNIEXPORT jstring JNICALL Java_io_github_jvoiceproject_piperjni_PiperJNI_getVersion(JNIEnv *env, jobject /*thisObject*/) {
     return env->NewStringUTF(_PIPER_VERSION);
 }
