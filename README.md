@@ -1,9 +1,10 @@
 # PiperJNI
 
-A JNI wrapper for [Piper](https://github.com/OHF-Voice/piper1-gpl), a fast, local neural text to speech system.
+A JNI wrapper for [Piper](https://github.com/OHF-Voice/piper1-gpl), a fast, local neural text-to-speech system.
 
 ## Platform Support
 
+Java >= 17 is supported.
 This library aims to support the following platforms:
 
 * Windows x86_64
@@ -12,7 +13,7 @@ This library aims to support the following platforms:
 
 The JAR includes the piper-jni native library, which contains the [Piper](https://github.com/OHF-Voice/piper1-gpl) source,
 and the shared libraries it depends on:
-[espeak](https://espeak.sourceforge.net), [piper-phonemize](https://github.com/OHF-Voice/piper1-gpl) and [onxxruntime](https://onnxruntime.ai).
+[espeak](https://espeak.sourceforge.net) and [onxxruntime](https://onnxruntime.ai).
 
 ## Usage
 
@@ -59,7 +60,7 @@ try (var voice = piper.loadVoice(Paths.get("/path/to/en_US-lessac-medium.onnx"),
 
 ## Development
 
-You need to have Java >= 11 and C++ setup.
+You need to have Java >= 17 and C++ setup.
 
 After cloning the project, you need to init the piper submodule by running:
 
