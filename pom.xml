@@ -3,13 +3,13 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.github.givimad</groupId>
+  <groupId>io.github.jvoice</groupId>
   <artifactId>piper-jni</artifactId>
   <version>1.4.1</version>
 
   <name>piper-jni</name>
   <description>A JNI wrapper for Piper</description>
-  <url>https://github.com/GiviMAD/piper-jni</url>
+  <url>https://github.com/jvoice-project/piper-jni</url>
 
   <licenses>
     <license>
@@ -33,10 +33,10 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/givimad/piper-jni.git</connection>
-    <developerConnection>scm:git:git://github.com/GiviMAD/piper-jni.git</developerConnection>
+    <connection>scm:git:git://github.com/jvoice-project/piper-jni.git</connection>
+    <developerConnection>scm:git:git://github.com/jvoice-project/piper-jni.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/GiviMAD/piper-jni</url>
+    <url>https://github.com/jvoice-project/piper-jni</url>
   </scm>
 
   <distributionManagement>

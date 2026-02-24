@@ -27,7 +27,6 @@ The package is distributed through [Maven Central](https://central.sonatype.com/
     <!-- replace $version with a specific version -->
     <version>$version</version>
 </dependency>
-
 ```
 
 ### Gradle
@@ -121,7 +120,7 @@ mvn package
 
 If you want to add any missing piper functionality, you need to:
 
-* Add the native method description in [`PiperJNI.java`](src/main/java/io/github/givimad/piperjni/PiperJNI.java).
-* Run the `gen_header.sh` script to regenerate the [`io_github_givimad_piperjni_PiperJNI.h`](src/main/native/io_github_givimad_piperjni_PiperJNI.h) header file. 
-* Add the native method implementation in [`io_github_givimad_piperjni_PiperJNI.cpp`](src/main/native/io_github_givimad_piperjni_PiperJNI.cpp).
-* Add a new test for it at [`PiperJNITest.java`](src/test/java/io/github/givimad/piperjni/PiperJNITest.java).
+* Add the native method description in [`PiperJNI.java`](src/main/java/io/github/jvoice/piperjni/PiperJNI.java).
+* Run the `gen_header.sh` script to regenerate the [`io_github_jvoice_piperjni_PiperJNI.h`](src/main/native/io_github_jvoice_piperjni_PiperJNI.h) header file. 
+* Add the native method implementation in [`io_github_jvoice_piperjni_PiperJNI.cpp`](src/main/native/io_github_jvoice_piperjni_PiperJNI.cpp).
+* Add a new test for it at [`PiperJNITest.java`](src/test/java/io/github/jvoice/piperjni/PiperJNITest.java).

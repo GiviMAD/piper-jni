@@ -17,16 +17,20 @@
  * limitations under the License.
  * #L%
  */
-package io.github.givimad.piperjni;
+package io.github.jvoice.piperjni;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.github.givimad.piperjni.internal.NativeUtils;
+import io.github.jvoice.piperjni.internal.NativeUtils;
 
-/** Piper JNI */
+/**
+ * Piper JNI
+ *
+ * @author Miguel Álvarez Díez - Initial contribution
+ */
 public class PiperJNI implements AutoCloseable {
 
     private static boolean libraryLoaded;
