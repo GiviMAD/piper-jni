@@ -17,7 +17,7 @@
  * limitations under the License.
  * #L%
  */
-package io.github.givimad.piperjni;
+package io.github.jvoice.piperjni;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -43,6 +43,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+/**
+ * @author Miguel Álvarez Díez - Initial contribution
+ */
 public class PiperJNITest {
     private static PiperJNI piper;
 

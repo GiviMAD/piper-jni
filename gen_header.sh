@@ -1,6 +1,6 @@
 set -xe
 
-LIB_SRC=src/main/java/io/github/givimad/piperjni
+LIB_SRC=src/main/java/io/github/jvoice/piperjni
 
 javac -h src/main/native \
 $LIB_SRC/internal/NativeUtils.java \

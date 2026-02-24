@@ -17,11 +17,15 @@
  * limitations under the License.
  * #L%
  */
-package io.github.givimad.piperjni;
+package io.github.jvoice.piperjni;
 
 import java.nio.file.Path;
 
-/** The class {@link PiperVoice} represents a loaded voice model. */
+/**
+ * The class {@link PiperVoice} represents a loaded voice model.
+ *
+ * @author Miguel Álvarez Díez - Initial contribution
+ */
 public class PiperVoice extends PiperJNI.JNIRef {
 
     private final PiperJNI piper;

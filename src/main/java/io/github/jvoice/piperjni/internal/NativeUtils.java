@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package io.github.givimad.piperjni.internal;
+package io.github.jvoice.piperjni.internal;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,6 +68,7 @@ import java.util.zip.ZipFile;
  *     href="http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar">http://adamheinrich.com/blog/2012/how-to-load-native-jni-library-from-jar</a>
  * @see <a
  *     href="https://github.com/adamheinrich/native-utils">https://github.com/adamheinrich/native-utils</a>
+ * @author Miguel Álvarez Díez - Initial contribution
  */
 public class NativeUtils {
 
