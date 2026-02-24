@@ -21,11 +21,11 @@ jobs:
           # Define your matrix as a JSON object
           MATRIX_JSON='{
             "include": [
-              {"os": "ubuntu-24.04", "arch": "x86_64", "platform": "linux/amd64", "artifact_name": "debian-binary-amd64"},
-              {"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64", "artifact_name": "debian-binary-arm64"},
-              {"os": "macos-14", "arch": "amd64", "artifact_name": "macos-binary-amd64"},
-              {"os": "macos-14", "arch": "arm64", "artifact_name": "macos-binary-arm64"},
-              {"os": "windows-latest", "arch": "x86_64", "artifact_name": "windows-binary-x86_64"}
+              {"os": "ubuntu-24.04", "arch": "x86_64", "platform": "linux/amd64", "artifact_name": "debian-amd64"},
+              {"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64", "artifact_name": "debian-arm64"},
+              {"os": "macos-14", "arch": "amd64", "artifact_name": "macos-amd64"},
+              {"os": "macos-14", "arch": "arm64", "artifact_name": "macos-arm64"},
+              {"os": "windows-latest", "arch": "x86_64", "artifact_name": "windows-amd64"}
             ]
           }'
           echo "matrix=$(echo $MATRIX_JSON | jq -c .)" >> $GITHUB_OUTPUT
@@ -127,11 +127,11 @@ jobs:
       - uses: actions/download-artifact@v4
       - name: Setup resources
         run: |
-          tar -xvf ./debian-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
-          tar -xvf ./debian-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/debian-arm64/
-          tar -xvf ./macos-binary-amd64/piper-jni-libs.tar -C ./src/main/resources/macos-amd64/
-          tar -xvf ./macos-binary-arm64/piper-jni-libs.tar -C ./src/main/resources/macos-arm64/
-          tar -xvf ./windows-binary-x86_64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
+          tar -xvf ./debian-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
+          tar -xvf ./debian-arm64/piper-jni-libs.tar -C ./src/main/resources/debian-arm64/
+          tar -xvf ./macos-amd64/piper-jni-libs.tar -C ./src/main/resources/macos-amd64/
+          tar -xvf ./macos-arm64/piper-jni-libs.tar -C ./src/main/resources/macos-arm64/
+          tar -xvf ./windows-amd64/piper-jni-libs.tar -C ./src/main/resources/win-amd64/
           mv ./espeak-ng-data/*.zip ./src/main/resources/
       - name: Bundle resources as tarball
         run: |
