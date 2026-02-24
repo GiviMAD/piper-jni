@@ -25,10 +25,16 @@
   </licenses>
   <developers>
     <developer>
+      <id>GiviMAD</id>
       <name>Miguel Álvarez Díez</name>
       <email>miguelwork92@gmail.com</email>
-      <organization>GiviMAD</organization>
       <organizationUrl>https://github.com/GiviMAD</organizationUrl>
+    </developer>
+    <developer>
+      <id>florian-h05</id>
+      <name>Florian Hotze</name>
+      <email>dev@florianhotze.com</email>
+      <organizationUrl>https://github.com/florian-h05</organizationUrl>
     </developer>
   </developers>
 
