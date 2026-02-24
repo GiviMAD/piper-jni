@@ -42,6 +42,14 @@ dependencies {
 }
 ```
 
+All releases are signed with the PGP key `047A5F7D27B9F2408F31EB6D577886B2F4A44CB7`,
+you can find the public key on [keys.openpgp.org](https://keys.openpgp.org/search?q=047A5F7D27B9F2408F31EB6D577886B2F4A44CB7).
+To import the public key, use the following command:
+
+```shell
+gpg --keyserver keys.openpgp.org --recv-keys 047A5F7D27B9F2408F31EB6D577886B2F4A44CB7
+```
+
 You can also find the package's jar attached to each [release](https://github.com/jvoice-project/piper-jni/releases).
 
 ### Examples
