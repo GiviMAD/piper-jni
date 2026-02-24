@@ -156,7 +156,7 @@ public class PiperJNI implements AutoCloseable {
      * @param text Text to speak.
      * @return The audio samples
      * @throws IOException If generation fails.
-     * @throws NotInitialized If piper not initialized.
+     * @throws NotInitialized if Piper is not initialized
      */
     public short[] textToAudio(PiperVoice voice, String text) throws IOException, NotInitialized {
         return textToAudioImpl(voice, text, null);
@@ -169,7 +169,7 @@ public class PiperJNI implements AutoCloseable {
      * @param text Text to speak.
      * @param audioCallback Callback for each audio segment.
      * @throws IOException If generation fails.
-     * @throws NotInitialized If piper not initialized.
+     * @throws NotInitialized if Piper is not initialized
      */
     public void textToAudio(PiperVoice voice, String text, AudioCallback audioCallback)
             throws IOException, NotInitialized {
@@ -282,7 +282,7 @@ public class PiperJNI implements AutoCloseable {
     }
 
     /**
-     * In order to avoid sharing pointers between the c++ and java, we use this util base class
+     * In order to avoid sharing pointers between the C++ and Java, we use this util base class
      * which holds a random integer id generated in the whisper.cpp wrapper.
      *
      * @author Miguel Álvarez Díez - Initial contribution
