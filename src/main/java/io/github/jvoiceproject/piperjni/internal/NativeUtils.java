@@ -179,7 +179,7 @@ public class NativeUtils {
             temporaryDir = createTempDirectory(NATIVE_FOLDER_PATH_PREFIX);
             temporaryDir.toFile().deleteOnExit();
         }
-        String altDir = System.getProperty("io.github.givimad.piperjni.libdir");
+        String altDir = System.getProperty("io.github.jvoiceproject.piperjni.libdir");
         InputStream is;
         if (altDir != null) {
             String relativePath = path.substring(1);

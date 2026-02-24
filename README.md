@@ -17,13 +17,13 @@ and the shared libraries it depends on:
 
 ## Usage
 
-The package is distributed through [Maven Central](https://central.sonatype.com/artifact/io.github.givimad/piper-jni):
+The package is distributed through [Maven Central](https://central.sonatype.com/artifact/io.github.jvoice-project/piper-jni):
 
 ### Maven
 
 ```xml
 <dependency>
-    <groupId>io.github.givimad</groupId>
+    <groupId>io.github.jvoice-project</groupId>
     <artifactId>piper-jni</artifactId>
     <!-- replace $version with a specific version -->
     <version>$version</version>
@@ -38,11 +38,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.github.givimad:piper-jni:+' // gets the latest version
+    implementation 'io.github.jvoice-project:piper-jni:+' // gets the latest version
 }
 ```
 
-You can also find the package's jar attached to each [release](https://github.com/GiviMAD/piper-jni/releases).
+You can also find the package's jar attached to each [release](https://github.com/jvoice-project/piper-jni/releases).
 
 ### Examples
 
