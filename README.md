@@ -103,14 +103,14 @@ Piper voices can be downloaded from [HuggingFace](https://huggingface.co/rhasspy
 Finally, you can run the project's tests to confirm it works:
 
 ```shell
-mvn test
+./mvnw test
 ```
 
 Maven will download the Piper voice and configure the unit tests to use it.
 Optionally, you can override the voice model name, download URL as well as the text to speak:
 
 ```shell
-mvn \
+./mvnw \
   -Dtest.model.name="de_DE-thorsten-medium.onnx" \
   -Dtest.model.url="https://huggingface.co/rhasspy/piper-voices/resolve/main/de/de_DE/thorsten/medium" \
   -Dtest.text="Guten Tag!" \
@@ -122,7 +122,7 @@ mvn \
 Finally, you can build the Java project:
 
 ```shell
-mvn package
+./mvnw package
 ```
 
 ### Extending the Native API
