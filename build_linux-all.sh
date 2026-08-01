@@ -21,6 +21,8 @@ docker buildx build \
     --output "type=local,dest=src/main/resources/tmp" \
     .
 
+# Ensure resource directory exists
+mkdir -p src/main/resources/debian-amd64 src/main/resources/debian-arm64
 # espeak-ng-data.zip
 mv src/main/resources/tmp/linux_amd64/espeak-ng-data.zip src/main/resources/
 # Binaries

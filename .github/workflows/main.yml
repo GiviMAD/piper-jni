@@ -127,6 +127,7 @@ jobs:
       - uses: actions/download-artifact@v8
       - name: Setup resources
         run: |
+          mkdir -p src/main/resources/debian-amd64 src/main/resources/debian-arm64 src/main/resources/macos-amd64 src/main/resources/macos-arm64 src/main/resources/win-amd64
           tar -xvf ./debian-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
           tar -xvf ./debian-arm64/piper-jni-libs.tar -C ./src/main/resources/debian-arm64/
           tar -xvf ./macos-amd64/piper-jni-libs.tar -C ./src/main/resources/macos-amd64/
@@ -185,7 +186,9 @@ jobs:
           name: piper-jni-resources
           path: dist/
       - name: Extract resources tarball
-        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+        run: |
+          mkdir -p src/main/resources
+          tar -xvf dist/resources.tar -C ./src/main/resources/
       - name: Run Maven Tests
         shell: bash
         run: |
