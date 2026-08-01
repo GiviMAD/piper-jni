@@ -58,7 +58,7 @@ jobs:
       # --- Linux Build Logic ---
       - name: Docker Setup Buildx
         if: runner.os == 'Linux'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Build (Linux)
         if: runner.os == 'Linux'
         run: |
