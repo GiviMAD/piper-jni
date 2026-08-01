@@ -43,7 +43,7 @@ jobs:
         with:
           submodules: recursive
       - name: Setup Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -112,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -168,7 +168,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
@@ -213,7 +213,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.m2/repository
