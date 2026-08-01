@@ -94,13 +94,13 @@ jobs:
           tar -cvf dist\piper-jni-libs.tar -C dist\lib .
       # --- Upload Artifacts ---
       - name: Upload Library
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: dist/piper-jni-libs.tar
       - name: Upload eSpeak data
         if: matrix.arch == 'x86_64' && runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: espeak-ng-data
           path: dist/*.zip
@@ -138,7 +138,7 @@ jobs:
           mkdir -p dist
           tar -cvf dist/resources.tar -C ./src/main/resources/ .
       - name: Upload resources tarball
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: piper-jni-resources
           path: dist/resources.tar
@@ -151,7 +151,7 @@ jobs:
           rm dist/target/piper-jni-*-sources.jar
           tar -cvf dist/jar.tar -C dist/target/ .
       - name: Upload JAR tarball
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: piper-jni
           path: dist/jar.tar
