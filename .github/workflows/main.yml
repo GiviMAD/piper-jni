@@ -144,7 +144,7 @@ jobs:
           name: piper-jni-resources
           path: dist/resources.tar
       - name: Build with Maven
-        run: mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
+        run: ./mvnw -B package -DskipTests -Dmaven.javadoc.skip=true -Dsource.skip=true
       - name: Bundle JAR as tarball
         run: |
           mkdir -p dist/target
@@ -157,7 +157,7 @@ jobs:
           name: piper-jni
           path: dist/jar.tar
       - name: Run tests
-        run: mvn -B test
+        run: ./mvnw -B test
 
   test-maven:
     name: Maven Test (${{ matrix.artifact_name }})
@@ -200,9 +200,9 @@ jobs:
           # Specific check for macOS Intel on ARM runner
           if [[ "${{ runner.os }}" == "macOS" && "${{ matrix.arch }}" == "amd64" ]]; then
             echo "Running tests via Rosetta for x86_64"
-            arch -x86_64 mvn $COMMON_OPTS test
+            arch -x86_64 ./mvnw $COMMON_OPTS test
           else
-            mvn $COMMON_OPTS test
+            ./mvnw $COMMON_OPTS test
           fi
 
   deploy:
@@ -244,8 +244,8 @@ jobs:
       - name: Deploy with Maven
         id: deploy
         run: |
-          mvn -B clean deploy -DskipTests -Pci-cd
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          ./mvnw -B clean deploy -DskipTests -Pci-cd
+          VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           PIPER_VERSION=$(echo "${VERSION%%"-"*}")
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "PIPER_VERSION=$PIPER_VERSION" >> $GITHUB_OUTPUT
