@@ -124,7 +124,7 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRO }}
           java-version: ${{ env.JAVA_VERSION }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
       - name: Setup resources
         run: |
           tar -xvf ./debian-amd64/piper-jni-libs.tar -C ./src/main/resources/debian-amd64/
@@ -180,7 +180,7 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRO }}
           java-version: ${{ env.JAVA_VERSION }}
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: piper-jni-resources
           path: dist/
@@ -221,7 +221,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       # Download & Extract resources artifact
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: piper-jni-resources
           path: dist/
