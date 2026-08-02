@@ -234,8 +234,8 @@ jobs:
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v5.6.0
         with:
-          java-version: 17
-          distribution: 'zulu'
+          distribution: ${{ env.JAVA_DISTRO }}
+          java-version: ${{ env.JAVA_VERSION }}
           server-id: central
           server-username: MAVEN_CENTRAL_USERNAME
           server-password: MAVEN_CENTRAL_TOKEN
