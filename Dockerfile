@@ -25,7 +25,7 @@ ARG RUN_TEST
 RUN git submodule update --init
 RUN TARGETARCH=${TARGETARCH} ./build_linux.sh
 RUN mkdir -p /app/install/lib
-RUN cp src/main/resources/debian-${TARGETARCH}/*.so* /app/install/lib/
+RUN cp src/main/resources/debian-${TARGETARCH}/*.so /app/install/lib/
 RUN tar -cvf /app/install/piper-jni-libs.tar -C /app/install/lib .
 RUN cp src/main/resources/*.zip /app/install/
 

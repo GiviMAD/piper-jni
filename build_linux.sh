@@ -17,10 +17,16 @@ case $AARCH in
         exit 1 ;;
 esac
 
-build_lib() {
-    cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src/main/resources/debian-$AARCH
-    cmake --build build --config Release -j$(nproc)
-    cmake --install build
-}
+TARGET_DIR="src/main/resources/debian-$AARCH"
 
-build_lib
+cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$TARGET_DIR"
+cmake --build build --config Release -j$(nproc)
+cmake --install build
+
+find "$TARGET_DIR" -type l \( -name "*.so" -o -name "*.so.*" \) | while read -r link; do
+    target=$(readlink -f "$link")
+    [ -f "$target" ] || continue
+    rm -f "$link"
+    mv "$target" "$link"
+    rmdir "$(dirname "$target")" 2>/dev/null || true
+done
