@@ -227,7 +227,9 @@ jobs:
           name: piper-jni-resources
           path: dist/
       - name: Extract resources tarball
-        run: tar -xvf dist/resources.tar -C ./src/main/resources/
+        run: |
+          mkdir -p src/main/resources
+          tar -xvf dist/resources.tar -C ./src/main/resources//
       # Deploy
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v5.6.0
