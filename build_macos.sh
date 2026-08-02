@@ -20,7 +20,7 @@ esac
 
 TARGET=$AARCH-apple-macosx$TARGET_VERSION
 
-TARGET_DIR="src/main/resources/macos-$AARCH"
+TARGET_DIR="src/main/resources/macos-$AARCH_NAME"
 
 cmake -Bbuild -DCMAKE_INSTALL_PREFIX="$TARGET_DIR" -DCMAKE_OSX_DEPLOYMENT_TARGET=$TARGET_VERSION -DCMAKE_OSX_ARCHITECTURES=$AARCH
 cmake --build build --config Release
