@@ -1,3 +1,4 @@
+if "%AARCH%"=="" set "AARCH=amd64"
 set "TARGET_DIR=src\main\resources\win-%AARCH%"
 
 cmake -Bbuild -DCMAKE_INSTALL_PREFIX="%TARGET_DIR%"
