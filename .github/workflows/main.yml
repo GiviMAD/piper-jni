@@ -85,9 +85,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop' # Forces exit on error
-          cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src\main\resources\win-amd64
-          cmake --build build --config Release
-          cmake --install build
+          .\build_win.cmd
           if (!(Test-Path dist)) { mkdir dist }
           if (!(Test-Path dist\lib)) { mkdir dist\lib }
           move-item src\main\resources\win-amd64\*.dll .\dist\lib\
