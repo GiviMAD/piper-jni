@@ -215,7 +215,7 @@
 
             <importOrder>
               <wildcardsLast>true</wildcardsLast>
-              <order>\#dev.digiried.wattpilot,dev.digiried.wattpilot,java|javax|jakarta,\#</order>
+              <order>\#io.github.jvoiceproject,io.github.jvoiceproject,java|javax|jakarta,\#</order>
               <!-- you can use an empty string for all the imports you didn't specify explicitly, '|' to join group without blank line, and '\#` prefix for static imports. -->
             </importOrder>
           </java>
