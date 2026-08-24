@@ -1,4 +1,4 @@
-# PiperJNI
+# Piper JNI
 
 A JNI wrapper for [Piper](https://github.com/OHF-Voice/piper1-gpl), a fast, local neural text-to-speech system.
 
@@ -55,14 +55,17 @@ You can also find the package's jar attached to each [release](https://github.co
 ### Examples
 
 ```java
+String textToSpeak = "Hello, world!";
+
 PiperJNI piper = new PiperJNI();
-piper.initialize(true);
-try (var voice = piper.loadVoice(Paths.get("/path/to/en_US-lessac-medium.onnx"), Path.of("/path/to/en_US-lessac-medium.onnx.json"), 0)) {
+// Initialize Piper before using it.
+piper.initialize();
+try (var voice = piper.loadVoice(Paths.get("/path/to/en_US-lessac-medium.onnx"), Path.of("/path/to/en_US-lessac-medium.onnx.json"))) {
     int sampleRate = voice.getSampleRate();
     short[] samples = piper.textToAudio(voice, textToSpeak);
     // Do something with the samples...
 } finally {
-    piper.terminate(config);
+    piper.close();
 }
 ```
 
@@ -90,20 +93,18 @@ This uses `docker buildx` to build the native libraries and places them in `src/
 
 If you prefer to build locally for your current platform:
 
-```shell
-# You need to set the correct resources folder as install prefix.
-cmake -Bbuild -DCMAKE_INSTALL_PREFIX=src/main/resources/debian-$(uname -m)
-cmake --build build --config Release
-cmake --install build
-```
+- **Linux:** Run `./build_linux.sh`
+- **macOS:** Run `./build_macos.sh`
+- **Windows:** Run `.\build_win.cmd`
 
-Then you need to download a piper voice (`.onnx`) and its configuration (`.onnx.json`).
-Piper voices can be downloaded from [HuggingFace](https://huggingface.co/rhasspy/piper-voices/tree/main).
+These scripts compile the JNI shared library and copy it directly to the corresponding `src/main/resources` folder.
 
-Finally, you can run the project's tests to confirm it works:
+### Java Build
+
+Finally, you can build the Java library, run the tests, and package the JAR with Maven:
 
 ```shell
-./mvnw test
+./mvnw package
 ```
 
 Maven will download the Piper voice and configure the unit tests to use it.
@@ -114,15 +115,7 @@ Optionally, you can override the voice model name, download URL as well as the t
   -Dtest.model.name="de_DE-thorsten-medium.onnx" \
   -Dtest.model.url="https://huggingface.co/rhasspy/piper-voices/resolve/main/de/de_DE/thorsten/medium" \
   -Dtest.text="Guten Tag!" \
-  test
-```
-
-### Java Build
-
-Finally, you can build the Java project:
-
-```shell
-./mvnw package
+  package
 ```
 
 ### Extending the Native API
