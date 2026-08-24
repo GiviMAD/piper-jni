@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches: [ main ]
-    tags: [ "v*.*.*", "v*.*.*-*" ]
+    tags: [ "v*" ]
   pull_request:
   workflow_dispatch:
 
@@ -184,6 +184,7 @@ jobs:
           name: piper-jni-resources
           path: dist/
       - name: Extract resources tarball
+        shell: bash
         run: |
           mkdir -p src/main/resources
           tar -xvf dist/resources.tar -C ./src/main/resources/
@@ -227,6 +228,7 @@ jobs:
           name: piper-jni-resources
           path: dist/
       - name: Extract resources tarball
+        shell: bashR
         run: |
           mkdir -p src/main/resources
           tar -xvf dist/resources.tar -C ./src/main/resources//
