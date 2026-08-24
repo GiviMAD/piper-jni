@@ -228,7 +228,7 @@ jobs:
           name: piper-jni-resources
           path: dist/
       - name: Extract resources tarball
-        shell: bashR
+        shell: bash
         run: |
           mkdir -p src/main/resources
           tar -xvf dist/resources.tar -C ./src/main/resources//
