@@ -248,7 +248,7 @@
           <inceptionYear>2023</inceptionYear>
           <licenseName>apache_v2</licenseName>
           <organizationName>Miguel Álvarez Díez</organizationName>
-          <copyrightOwners>Contributors to whisper-jni</copyrightOwners>
+          <copyrightOwners>Contributors to piper-jni</copyrightOwners>
           <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
           <useJavaNoReformatCommentStartTag>false</useJavaNoReformatCommentStartTag>
           <trimHeaderLine>true</trimHeaderLine>
