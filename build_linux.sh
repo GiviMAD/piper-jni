@@ -10,8 +10,6 @@ case $AARCH in
         AARCH="amd64" ;;
     aarch64|arm64)
         AARCH="arm64" ;;
-    arm|armhf|armv7l)
-        AARCH="armv7l" ;;
     *)
         echo "Unsupported architecture: ${AARCH}"
         exit 1 ;;

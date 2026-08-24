@@ -5,9 +5,9 @@
 FROM maven:3.9.9-eclipse-temurin-17-focal AS native-builder
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends git build-essential curl
-# Add kitware repo for newer cmake (improves armv7l support)
+# Add Kitware repo for newer CMake version
 RUN curl -s https://apt.kitware.com/kitware-archive.sh | bash -s
-# Install cmake
+# Install CMake
 RUN apt-get update && apt-get install -y --no-install-recommends cmake
 
 WORKDIR /app
