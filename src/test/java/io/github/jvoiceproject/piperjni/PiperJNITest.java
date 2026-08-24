@@ -66,7 +66,7 @@ public class PiperJNITest {
         try {
             piper.initialize(true);
         } finally {
-            piper.terminate();
+            piper.close();
         }
     }
 
@@ -87,7 +87,7 @@ public class PiperJNITest {
                 assertNotNull(voice);
             }
         } finally {
-            piper.terminate();
+            piper.close();
         }
     }
 
@@ -122,7 +122,7 @@ public class PiperJNITest {
                 verifyAudioFile(outPath);
             }
         } finally {
-            piper.terminate();
+            piper.close();
         }
     }
 
@@ -159,7 +159,7 @@ public class PiperJNITest {
                 verifyAudioFile(outPath);
             }
         } finally {
-            piper.terminate();
+            piper.close();
         }
     }
 
