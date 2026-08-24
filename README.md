@@ -78,7 +78,7 @@ git submodule update --init
 
 ### Build with Docker (Recommended)
 
-You can build for all supported Linux platforms (amd64, arm64, armv7l) using Docker:
+You can build for all supported Linux platforms (`amd64`, `arm64`) using Docker:
 
 ```shell
 ./build_linux-all.sh
