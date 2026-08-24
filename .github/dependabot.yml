@@ -29,6 +29,11 @@ updates:
       - dependencies
       - infrastructure
     registries: "*"
+    groups:
+      maven-wrapper:
+        patterns:
+          - "org.apache.maven.wrapper:maven-wrapper"
+          - "org.apache.maven:apache-maven"
     allow:
       - dependency-name: "com.diffplug.spotless:spotless-maven-plugin"
       - dependency-name: "org.apache.maven.plugins:*"
